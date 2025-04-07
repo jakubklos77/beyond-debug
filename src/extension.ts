@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 	//const attachItemsProvider: AttachItemsProvider = NativeAttachItemsProviderFactory.Get();
 	//const attacher: AttachPicker = new AttachPicker(attachItemsProvider);
 	//context.subscriptions.push(vscode.commands.registerCommand('extension.pickNativeProcess', () => attacher.ShowAttachEntries()));
-		
+
 	let outchannel = vscode.window.createOutputChannel('BeyondDebug');
 	logger.init((e) => {
 		outchannel.appendLine(e.body.output);
@@ -43,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const provider = new HiDebugConfigurationProvider();
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('by-gdb', provider));
 
-	
+
 	context.subscriptions.push(
 		vscode.commands.registerTextEditorCommand('bydebug.ViewMemory',memview.cmdViewMemoryWithHexEdit)
 	);
@@ -69,6 +69,21 @@ export function activate(context: vscode.ExtensionContext) {
 	// 	context.subscriptions.push(factory);
 	// }
 
+	// Register debug action to focus terminal
+	vscode.debug.onDidStartDebugSession(session => {
+
+		if (session.type != 'by-gdb')
+			return;
+
+		if (session.configuration.activateTerminal) {
+			// Focus the terminal
+			vscode.commands.executeCommand("workbench.action.terminal.focus");
+		}
+		if (session.configuration.clearTerminal) {
+			// Clear the terminal to get rid of the gdb warning
+			vscode.commands.executeCommand('workbench.action.terminal.clear');
+		}
+	});
 }
 
 export function deactivate() {

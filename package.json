@@ -1,13 +1,10 @@
 {
 	"name": "beyond-debug",
 	"displayName": "GDB Debugger - Beyond",
-	"version": "0.9.15",
-	"publisher": "coolchyni",
+	"version": "1.9.15",
+	"publisher": "jakubklos",
 	"description": "Debugger with gdb for c,c++,freepascal,fortran and more.",
-	"author": {
-		"name": "coolchyni",
-		"email": "coolchyni@gmail.com"
-	},
+	"author": "jakubklos <jakubklos77@gmail.com>",
 	"license": "MIT",
 	"keywords": [
 		"beyond",
@@ -70,7 +67,7 @@
 		"simplepeg": "1.2.0",
 		"ssh2": "^1.11.0",
 		"typescript": "^3.8.3",
-		"vsce": "1.78.0",
+		"vsce": "^1.78.0",
 		"vscode-nls": "5.2.0"
 	},
 	"main": "./out/extension",
@@ -220,20 +217,30 @@
 								"description": "Convert all variables to uppercase. Used in case insensitive language, e.g. pascal.",
 								"default": false
 							},
+							"activateTerminal": {
+								"type": "boolean",
+								"description": "Activate terminal when debug session starts.",
+								"default": false
+							},
+							"clearTerminal": {
+								"type": "boolean",
+								"description": "Clear terminal when debug session starts.",
+								"default": false
+							},
 							"defaultStringCharset": {
 								"type": "string",
 								"description": "Set the charset of a string variable on display.  e.g. utf-8.",
 								"default": ""
 							},
-							"language":{
-								"type":"string",
+							"language": {
+								"type": "string",
 								"enum": [
 									"auto",
 									"c++",
 									"pascal"
 								],
-								"description":"The development language of for debug. e.g. c++ pascal ...",
-								"default":"auto"
+								"description": "The development language of for debug. e.g. c++ pascal ...",
+								"default": "auto"
 							},
 							"remote": {
 								"required": [
