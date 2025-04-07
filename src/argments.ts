@@ -15,6 +15,8 @@ export interface ILaunchRequestArguments extends DebugProtocol.LaunchRequestArgu
 	cwd?: string;
 	commandsBeforeExec?: string[];
 	varUpperCase: boolean;
+	activateTerminal?: boolean;
+	clearTerminal?: boolean;
 	defaultStringCharset?: string;
 	stopAtEntry: boolean;
 	language?: string;

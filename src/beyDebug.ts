@@ -71,14 +71,14 @@ export class BeyDebug extends DebugSession {
 	//current language  of debugged program
 	private language:string;
 
-	//default charset 
+	//default charset
 	private defaultStringCharset?:string;
-	
+
 	private isSSH=false;
 	private workspathpath=vscode.workspace.workspaceFolders[0].uri.path;
 	private sendMsgToDebugConsole(msg: string, itype: EMsgType = EMsgType.info) {
 		let style = [TE_Style.Blue];
-		// todo:vscode.window.activeColorTheme.kind is proposed-api in low version 
+		// todo:vscode.window.activeColorTheme.kind is proposed-api in low version
 		// if (vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark) {
 
 		// 	style = [TE_Style.BrightWhite];
@@ -108,9 +108,9 @@ export class BeyDebug extends DebugSession {
 					break;
 			}
 		//}
-	
+
 		this.sendEvent(new OutputEvent(TerminalEscape.apply({ msg: msg, style: style })));
-		
+
 	}
 
 	private waitForConfingureDone():Promise<void>{
@@ -164,15 +164,15 @@ export class BeyDebug extends DebugSession {
 			this._isRunning = false;
 			this._variableHandles.reset();
 
-			
+
 			switch (e.reason) {
-					
+
 				/** A breakpoint was hit. */
 				case TargetStopReason.BreakpointHit:
 				/** A step instruction finished. */
 				case TargetStopReason.EndSteppingRange:
 				/** A step-out instruction finished. */
-				case TargetStopReason.FunctionFinished:	
+				case TargetStopReason.FunctionFinished:
 				/** The target was signalled. */
 				case TargetStopReason.SignalReceived:
 				/** The target encountered an exception (this is LLDB specific). */
@@ -189,7 +189,7 @@ export class BeyDebug extends DebugSession {
 				case TargetStopReason.ExitedNormally:
 					this.sendEvent(new TerminatedEvent(false));
 					break;
-								
+
 				/** Catch-all for any of the other numerous reasons. */
 				case TargetStopReason.Unrecognized:
 				default:
@@ -230,7 +230,7 @@ export class BeyDebug extends DebugSession {
 				case 'c++':
 					if(expressionType.endsWith('char *') ){
 						let val=value;
-						
+
 						val=val.replace(/\\(\d+)/g,(s,args)=>{
 							let num= parseInt( args,8);
 							return String.fromCharCode(num);
@@ -263,11 +263,11 @@ export class BeyDebug extends DebugSession {
 				default:
 					break;
 			}
-			
 
-		} 
+
+		}
 		return value;
-		
+
 	}
 	/**
 	 * The 'initialize' request is the first request called by the frontend
@@ -293,7 +293,7 @@ export class BeyDebug extends DebugSession {
 		response.body.supportsDataBreakpoints = true;
 
 		// make VS Code to support completion in REPL
-		//todo 
+		//todo
 		response.body.supportsCompletionsRequest = false;
 		response.body.completionTriggerCharacters = [".", "["];
 
@@ -308,11 +308,11 @@ export class BeyDebug extends DebugSession {
 
 		response.body.supportsTerminateThreadsRequest = true;
 
-		
+
 		response.body.supportsSetVariable=true;
 		response.body.supportsSetExpression=true;
 		response.body.supportsClipboardContext=true;
-		
+
 		response.body.supportsReadMemoryRequest = true;
 		//todo
 		response.body.supportsExceptionInfoRequest=false;
@@ -348,7 +348,7 @@ export class BeyDebug extends DebugSession {
 		}else{
 			this.language='auto';
 		}
-		
+
 		if(this.language=="auto"){
 			if(isLanguagePascal()){
 				this.language="pascal";
@@ -362,12 +362,12 @@ export class BeyDebug extends DebugSession {
 			await this.waitForConfingureDone();
 			//must wait for configure done. It will get error args without this.
 			//await this._startDone.wait(2000);
-			await this.dbgSession.waitForStart();	
+			await this.dbgSession.waitForStart();
 		} catch (error) {
 			this.sendEvent(new TerminatedEvent(false));
 			this.sendErrorResponse(response,500);
-		}		
-		
+		}
+
 
 		//await this.dbgSession.execNativeCommand('-gdb-set mi-async on');
 		if (args.cwd) {
@@ -382,7 +382,7 @@ export class BeyDebug extends DebugSession {
 				});
 			}
 		}
-		// start the program 
+		// start the program
 		let ret = await this.dbgSession.setExecutableFile(args.program).catch((e) => {
 
 			vscode.window.showErrorMessage("Failed to start the debugger." + e.message);
@@ -473,7 +473,7 @@ export class BeyDebug extends DebugSession {
 
 		}
 		if(this.language=="auto"){
-			
+
 			let checklang=(out:string)=>
 			{
 				if (out.indexOf('language')>0)
@@ -483,17 +483,17 @@ export class BeyDebug extends DebugSession {
 						this.language=m[1];
 					}
 					this.dbgSession.off(dbg.EVENT_DBG_CONSOLE_OUTPUT,checklang);
-				}	
+				}
 			};
 			this.dbgSession.on(dbg.EVENT_DBG_CONSOLE_OUTPUT,checklang);
 			await this.dbgSession.execNativeCommand('show language');
-		
-			
-		}
-		
-		
 
-		
+
+		}
+
+
+
+
 
 		await this.dbgSession.startInferior({stopAtStart: args.stopAtEntry}).catch((e) => {
 			this.sendMsgToDebugConsole(e.message, EMsgType.error);
@@ -510,7 +510,7 @@ export class BeyDebug extends DebugSession {
 		}else{
 			this.language='auto';
 		}
-		
+
 		if(this.language=="auto"){
 			if(isLanguagePascal()){
 				this.language="pascal";
@@ -518,21 +518,21 @@ export class BeyDebug extends DebugSession {
 		}
 		this.initDbSession(false);
 			//const attacher: AttachPicker = new AttachPicker(attachItemsProvider);
-			
-			
+
+
 			// let s=await showQuickPick(()=>{
 			// 	return attachItemsProvider.getAttachItems();
 			// });
-		
 
-	   
+
+
 		//let s=await attacher.ShowAttachEntries();
 		//let prov= NativeAttachItemsProviderFactory.Get();
 		//let result=await showQuickPick(prov.getAttachItems);
 
 		vscode.commands.executeCommand('workbench.panel.repl.view.focus');
 		this.defaultStringCharset=args.defaultStringCharset;
-		
+
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		this.dbgSession.startIt(args);
 		await this.waitForConfingureDone();
@@ -552,8 +552,8 @@ export class BeyDebug extends DebugSession {
 		}
 
 		const attachItemsProvider: AttachItemsProvider = NativeAttachItemsProviderFactory.Get();
-		
-		
+
+
 		let plist=await attachItemsProvider.getAttachItems();
 		if(args.program){
 			let pname=args.program;
@@ -586,14 +586,14 @@ export class BeyDebug extends DebugSession {
 				this.sendErrorResponse(response,0,(error as Error).message);
 				return;
 			}
-			
-			
+
+
 		}
 
 		try {
 			await this.dbgSession.attach(args.processId);
 		} catch (error) {
-			
+
 			//vscode.window.showErrorMessage();
 			response.success=false;
 			response.command='cancelled';
@@ -602,7 +602,7 @@ export class BeyDebug extends DebugSession {
 			this.sendResponse(response);
 			return;
 		}
-	 	
+
 		await this.dbgSession.resumeInferior();
 		this._isAttached=true;
 		this.sendResponse(response);
@@ -611,7 +611,7 @@ export class BeyDebug extends DebugSession {
 	protected async  pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments, request?: DebugProtocol.Request): Promise<void> {
 
 		await this.dbgSession.pause();
-	
+
 		logger.log('pause');
 		this.sendResponse(response);
 
@@ -628,7 +628,7 @@ export class BeyDebug extends DebugSession {
 			await this.dbgSession.pause();
 			isPause = true;
 		}
-		
+
 		let srcpath = args.source.path as string;
 		srcpath=path.normalize(srcpath);
 		if(this.language=='pascal'){ //pascal can find file use unit name
@@ -636,7 +636,7 @@ export class BeyDebug extends DebugSession {
 				srcpath=path.basename(srcpath);
 			}
 		}
-		
+
 		if (this._breakPoints.has(srcpath)) {
 			let bps: number[] = [];
 
@@ -705,7 +705,7 @@ export class BeyDebug extends DebugSession {
 				let ids=th.targetId.split(' ');
 				let tid=Number.parseInt(ids[1]);
 				threads.push(new Thread(th.id, `Thread #${tid}`));
-		
+
 			}else if(idtype==2){
 				let ids=th.targetId.split('.');
 				let tid=Number.parseInt(ids[1]);
@@ -713,7 +713,7 @@ export class BeyDebug extends DebugSession {
 			}else{
 				threads.push(new Thread(th.id, th.targetId));
 			}
-			
+
 		});
 		response.body = {
 			threads: threads
@@ -730,7 +730,7 @@ export class BeyDebug extends DebugSession {
 
 		const frames = await this.dbgSession.getStackFrames({ lowFrame: startFrame, highFrame: endFrame });
 
-		//remove watchs 
+		//remove watchs
 		for (const watch of this._watchs) {
 			await this.dbgSession.removeWatch(watch[1].id).catch(() => { });;
 		}
@@ -792,7 +792,9 @@ export class BeyDebug extends DebugSession {
 				if (!c) {
 					continue;
 				}
-				
+
+				this.handleWatchProcessor(c);
+
 				this._locals.watch.push(c);
 
 				let vid = 0;
@@ -810,12 +812,12 @@ export class BeyDebug extends DebugSession {
 			}
 
 		} else {
-		
+
 			if(id.startsWith('**FLIST**')){  //pascal TStringList
 				let vid=id.replace('**FLIST**','');
 				let strs=vid.split(':');
 				let cnt=strs[strs.length-1];
-				
+
 				for(var i=0;i<Number.parseInt(cnt);i++){
 					let exp=strs[0]+'.FLIST^['+i+']';
 					let val=await this.dbgSession.evaluateExpression(exp);
@@ -839,7 +841,7 @@ export class BeyDebug extends DebugSession {
 							variablesReference: 0
 						});
 					}
-					
+
 				}
 
 			  //let s=await	this.dbgSession.evaluateExpression(id.replace('**items**',''));
@@ -850,6 +852,9 @@ export class BeyDebug extends DebugSession {
 				});
 				for (const c of childs) {
 					let vid = 0;
+
+					this.handleWatchProcessor(c);
+
 					if(this.language=='pascal'){
 						if(c.expressionType=='PSTRINGITEMLIST' || c.expressionType=='TANSISTRINGITEMLIST'){ //for pascal TStringList
 							let exp= await this.dbgSession.getWatchExpression(id);
@@ -866,21 +871,21 @@ export class BeyDebug extends DebugSession {
 							continue;
 						 }
 					}
-					
+
 					if (c.childCount > 0) {
 					   vid = this._variableHandles.create(c.id);
 					}
-				   
+
 				   variables.push({
 					   name: c.expression,
 					   type: c.expressionType,
 					   value: this.decodeString(c.value,c.expressionType),
 					   variablesReference: vid
 				   });
-   
+
 			   }
 			}
-			
+
 		}
 
 		response.body = {
@@ -903,9 +908,9 @@ export class BeyDebug extends DebugSession {
 					return value.expression===args.name;
 				});
 				if (watch){
-					ret=await this.dbgSession.setWatchValue(watch.id,args.value);	
+					ret=await this.dbgSession.setWatchValue(watch.id,args.value);
 				}
-	
+
 			}
 			response.body={
 				value:ret
@@ -913,8 +918,8 @@ export class BeyDebug extends DebugSession {
 		} catch (error) {
 			response.success=false;
 		}
-		
-	
+
+
 		this.sendResponse(response);
 	}
 	protected continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): void {
@@ -948,6 +953,23 @@ export class BeyDebug extends DebugSession {
 		this.sendResponse(response);
 	}
 
+	private handleWatchProcessor(watch: IWatchInfo): void {
+
+		if (this.language == 'pascal') {
+
+			if (watch.expressionType == 'ANSISTRING') {
+				// check if value not blank
+				if (watch.value != '0x0') {
+					// get just the string
+					watch.value = watch.value.split(' ').slice(1).join(' ')
+				} else {
+					watch.value = "''";
+				}
+				watch.childCount = 0;
+			}
+		}
+	}
+
 	protected async evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments) {
 		if (args.context === 'repl') {
 			let val = await this.dbgSession.execNativeCommand(args.expression).catch((e)=>{
@@ -977,6 +999,8 @@ export class BeyDebug extends DebugSession {
 					this.sendResponse(response);
 					return;
 				}
+
+				this.handleWatchProcessor(watch);
 
 				this._watchs.set(key, watch);
 
@@ -1114,13 +1138,13 @@ export class BeyDebug extends DebugSession {
 	protected async disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments, request?: DebugProtocol.Request) {
 		try {
 			if (this._isRunning) {
-			
+
 				try {
 					await this.dbgSession.pause();
 				} catch (error) {
 					this.dbgSession.kill();
 				}
-				
+
 			}
 			if(this._isAttached){
 				await this.dbgSession.executeCommand('target-detach');
@@ -1141,8 +1165,8 @@ export class BeyDebug extends DebugSession {
 		logger.log(args.frameId.toString());
 	}
 	protected exceptionInfoRequest(response: DebugProtocol.ExceptionInfoResponse, args: DebugProtocol.ExceptionInfoArguments, request?: DebugProtocol.Request): void{
-		
-		//todo 
+
+		//todo
 		// response.body={
 		// 	exceptionId:'1',
 		// 	description:'test',
@@ -1156,12 +1180,12 @@ export class BeyDebug extends DebugSession {
 	}
 
 	protected readMemoryRequest(response: DebugProtocol.ReadMemoryResponse, args: DebugProtocol.ReadMemoryArguments, request?: DebugProtocol.Request){
-		
+
 		this.sendResponse(response);
 
 	}
-   
+
 	public getBeyDbgSession():BeyDbgSession{
 		return this.dbgSession;
-	} 
+	}
 }

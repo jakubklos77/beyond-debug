@@ -27,7 +27,7 @@
 	"private": true,
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/coolchyni/beyond-debug"
+		"url": "https://github.com/jakubklos77/beyond-debug"
 	},
 	"scripts": {
 		"compile": "tsc -p ./",
