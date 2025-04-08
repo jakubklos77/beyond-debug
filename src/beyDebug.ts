@@ -860,7 +860,7 @@ export class BeyDebug extends DebugSession {
 
 		} else {
 
-			// Array list
+			// Array list handling
 			if (id.startsWith('**ARRAY**')){
 
 				// Get vid
@@ -899,7 +899,7 @@ export class BeyDebug extends DebugSession {
 							let newVid = this._variableHandles.create(c.id);
 							variables.push({
 								name: '[' + i + ']',
-								type: 'string',
+								type: c.expressionType,
 								value: '{...}',
 								variablesReference: newVid
 							});
@@ -936,7 +936,7 @@ export class BeyDebug extends DebugSession {
 						}
 
 						// Get array
-						if (await this.getArrayOfValue(c.expression, c.expressionType, c.childCount, c.id, variables))
+						if (await this.processArrayValue(c.expression, c.expressionType, c.childCount, c.id, variables))
 							continue;
 					}
 
@@ -1042,14 +1042,22 @@ export class BeyDebug extends DebugSession {
 		return false;
 	}
 
-	private async getArrayOfValue(expression: string, expressionType: string, childCount: number, id: string, variables: DebugProtocol.Variable[]): Promise<boolean> {
+	private async processArrayValue(expression: string, expressionType: string, childCount: number, id: string, variables: DebugProtocol.Variable[]): Promise<boolean> {
 
 
 		// We have an array of
 		if (expressionType.match(/array of .+/)) {
 
+			// Special var.*<OBJ> VSCode hover issue
+			if (id.includes('.*')) {
+				// Get the starting var id
+				let strs = id.split('.*');
+				id = strs[0];
+			}
+
 			// Get address
 			let address = await this.dbgSession.getWatchValue(id);
+
 			if (address === NULL_POINTER) {
 					variables.push({
 						name: expression,
@@ -1070,8 +1078,10 @@ export class BeyDebug extends DebugSession {
 			if (isNaN(length))
 				return false;
 
+			// Mark as array
 			let vid = this._variableHandles.create('**ARRAY**' + id + ':' + length);
 
+			// Push with count
 			variables.push({
 				name: expression,
 				type: expressionType,
@@ -1080,11 +1090,6 @@ export class BeyDebug extends DebugSession {
 			});
 
 			return true;
-
-			// Construct eval
-			// Name + '^[]'
-			//let exp = await this.dbgSession.getWatchExpression(id);
-
 		}
 		return false;
 	}
