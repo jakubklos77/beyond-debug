@@ -70,6 +70,7 @@ export class BeyDebug extends DebugSession {
 
 	//current language  of debugged program
 	private language:string;
+	private isPascal:boolean;
 
 	//default charset
 	private defaultStringCharset?:string;
@@ -245,19 +246,61 @@ export class BeyDebug extends DebugSession {
 					}
 					break;
 				case 'pascal':
-					if(expressionType==='ANSISTRING'){
-						let val=value;
-						//remove '' from str
-						const regexp = /'(.*?)(?<!')'(?!')/g;
-						val=val.replace(regexp,(a,b)=>{return b;}).replace(/''/g,"'");
 
-						val=val.replace(/#(\d+)/g,(s,args)=>{
-							let num= parseInt( args,10);
-							return String.fromCharCode(num);
-						});
+					// Decode and unescape string
+					if (expressionType === 'ANSISTRING') {
 
-						let bf=val.split('').map((e)=>{return e.charCodeAt(0);});
-						return iconv.decode(Buffer.from(bf),this.defaultStringCharset);
+						// Blank string
+						if (value === "''")
+							return value;
+
+						let val = value;
+
+						// convert #num to char
+						let isQuote = false;
+						let result = '';
+						let isNum = false;
+						let minLen = Math.min(val.length, 255);
+						let lastQuoteIndex = -10;
+						for (let i = 0; i < minLen; i++) {
+							let ch = val[i];
+
+							// Quote
+							if (ch === '\'') {
+
+								// Skip this quote after a numeric value
+								if (!isQuote && isNum) {
+									isNum = false;
+									isQuote = true;
+									continue;
+								}
+
+								// Quote escaping handle
+								if (!isQuote && lastQuoteIndex == i-1)
+									result += "''";
+								if (isQuote)
+									lastQuoteIndex = i;
+
+								isQuote = !isQuote;
+
+							// Numeric value
+							} else if (!isQuote && ch === '#' && i + 1 < val.length) {
+								let match = val.substring(i + 1).match(/^(\d+)/);
+								if (match) {
+									let num = parseInt(match[1], 10);
+									result += String.fromCharCode(num);
+									i += match[1].length; // Skip the digits
+									isNum = true;
+								}
+
+							// Other
+							} else {
+								result += ch;
+							}
+						}
+
+						let bf = result.split('').map((e)=>{return e.charCodeAt(0);});
+						return "'" + iconv.decode(Buffer.from(bf),this.defaultStringCharset) + "'";
 					}
 					break;
 				default:
@@ -342,7 +385,7 @@ export class BeyDebug extends DebugSession {
 		let args=_args as ILaunchRequestArguments;
 		this.initDbSession(args.ssh?true:false);
 		vscode.commands.executeCommand('workbench.panel.repl.view.focus');
-		this.defaultStringCharset=args.defaultStringCharset;
+		this.defaultStringCharset = args.defaultStringCharset ? args.defaultStringCharset : "utf-8";
 		if(args.language){
 			this.language=args.language;
 		}else{
@@ -354,6 +397,7 @@ export class BeyDebug extends DebugSession {
 				this.language="pascal";
 			}
 		}
+		this.isPascal = this.language=='pascal';
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)
@@ -516,6 +560,7 @@ export class BeyDebug extends DebugSession {
 				this.language="pascal";
 			}
 		}
+		this.isPascal = this.language=='pascal';
 		this.initDbSession(false);
 			//const attacher: AttachPicker = new AttachPicker(attachItemsProvider);
 
@@ -531,7 +576,7 @@ export class BeyDebug extends DebugSession {
 		//let result=await showQuickPick(prov.getAttachItems);
 
 		vscode.commands.executeCommand('workbench.panel.repl.view.focus');
-		this.defaultStringCharset=args.defaultStringCharset;
+		this.defaultStringCharset = args.defaultStringCharset ? args.defaultStringCharset : "utf-8";
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		this.dbgSession.startIt(args);
@@ -631,7 +676,7 @@ export class BeyDebug extends DebugSession {
 
 		let srcpath = args.source.path as string;
 		srcpath=path.normalize(srcpath);
-		if(this.language=='pascal'){ //pascal can find file use unit name
+		if(this.isPascal){ //pascal can find file use unit name
 			if(!srcpath.startsWith(this.workspathpath)){
 				srcpath=path.basename(srcpath);
 			}
@@ -801,7 +846,7 @@ export class BeyDebug extends DebugSession {
 				if (c.childCount > 0) {
 				  vid = this._variableHandles.create(c.id);
 				}
-				;
+
 				variables.push({
 					name: v.name,
 					type: c.expressionType,
@@ -855,8 +900,10 @@ export class BeyDebug extends DebugSession {
 
 					this.handleWatchProcessor(c);
 
-					if(this.language=='pascal'){
-						if(c.expressionType=='PSTRINGITEMLIST' || c.expressionType=='TANSISTRINGITEMLIST'){ //for pascal TStringList
+					if (this.isPascal) {
+
+						// TStringList
+						if(c.expressionType=='PSTRINGITEMLIST' || c.expressionType=='TANSISTRINGITEMLIST'){
 							let exp= await this.dbgSession.getWatchExpression(id);
 							let cnt=await this.dbgSession.getWatchValue(id+'.FCOUNT');
 							exp=exp.replace('->','.');
@@ -866,10 +913,24 @@ export class BeyDebug extends DebugSession {
 								type:'array',
 								value:'Strings['+cnt+']',
 								variablesReference:vid
-								//evaluateName:id+'.FLIST^[0]'
 							});
 							continue;
-						 }
+						 } else {
+
+							// Get short string value
+							let stringVal = await this.getShortStringValue(c.expressionType, c.childCount, c.id);
+							if (stringVal !== undefined) {
+
+								// Push string
+								variables.push({
+									name: c.expression,
+									type:'string',
+									value: this.decodeString(stringVal, "ANSISTRING"),
+									variablesReference: 0
+								});
+								continue;
+							}
+						}
 					}
 
 					if (c.childCount > 0) {
@@ -953,21 +1014,84 @@ export class BeyDebug extends DebugSession {
 		this.sendResponse(response);
 	}
 
-	private handleWatchProcessor(watch: IWatchInfo): void {
+	private handleWatchProcessor(watch: IWatchInfo): boolean {
 
-		if (this.language == 'pascal') {
+		if (this.isPascal) {
 
 			if (watch.expressionType == 'ANSISTRING') {
 				// check if value not blank
 				if (watch.value != '0x0') {
 					// get just the string
-					watch.value = watch.value.split(' ').slice(1).join(' ')
+					watch.value = this.decodeString(watch.value.split(' ').slice(1).join(' '), watch.expressionType);
 				} else {
 					watch.value = "''";
 				}
 				watch.childCount = 0;
+				watch.expressionType = 'string';
+
+				return true;
 			}
 		}
+
+		return false;
+	}
+
+	private async getShortStringValue(expressionType: string, childCount: number, id: string): Promise<string | undefined> {
+
+		// Short string handling (we may have a string)
+		if (expressionType.includes('STRING') && childCount == 2) {
+
+			// Get its children
+			let stringChilds = await this.dbgSession.getWatchChildren(id, { detail: dbg.VariableDetailLevel.All }).catch((e) => {
+				return [];
+			});
+
+			// Check if we have a short string
+			if (stringChilds.length == 2) {
+
+				// We have a short string indeed
+				if (stringChilds[0].expression == 'length' && stringChilds[1].expression == 'st') {
+					let stringArr = await this.dbgSession.getWatchChildren(stringChilds[1].id, { detail: dbg.VariableDetailLevel.All }).catch((e) => {
+						return [];
+					});
+
+					// Get the value
+					let strLen = stringChilds[0].value;
+					let strVal = '';
+					let isQuote = false;
+					let minLen = Math.min(strLen, stringArr.length);
+					for (let i = 0; i < minLen; i++) {
+						let charInt = parseInt(stringArr[i].value)
+						let ch = '';
+						if (charInt > 127) {
+							if (isQuote) {
+								strVal += '\'';
+								isQuote = false;
+							}
+							ch = '#' + charInt;
+
+						} else {
+							if (!isQuote) {
+								strVal += '\'';
+								isQuote = true;
+							}
+							ch = String.fromCharCode(charInt);
+							if (ch == '\'')
+								ch += '\'';
+						}
+						strVal += ch;
+					}
+					if (isQuote)
+						strVal += '\'';
+					if (strVal == '')
+						strVal = "''";
+
+					return strVal;
+				}
+			}
+		}
+
+		return undefined;
 	}
 
 	protected async evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments) {
@@ -1000,7 +1124,20 @@ export class BeyDebug extends DebugSession {
 					return;
 				}
 
-				this.handleWatchProcessor(watch);
+				// Handle
+				if (!this.handleWatchProcessor(watch)) {
+
+					if (this.isPascal) {
+
+						// Get short string value
+						let shortString = await this.getShortStringValue(watch.expressionType, watch.childCount, watch.id);
+						if (shortString !== undefined) {
+							watch.value = this.decodeString(shortString, "ANSISTRING");
+							watch.expressionType = 'string';
+							watch.childCount = 0;
+						}
+					}
+				}
 
 				this._watchs.set(key, watch);
 
