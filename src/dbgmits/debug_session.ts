@@ -160,13 +160,13 @@ export default class DebugSession extends events.EventEmitter {
    */
   end(notifyDebugger: boolean = true): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      
+
       var cleanup = (err: Error, data: any) => {
         this.cleanupWasCalled = true;
         this.lineReader.close();
         err ? reject(err) : resolve();
       };
-      
+
       if (!this.cleanupWasCalled) {
         while(this.cmdQueue.length>0){
           this.cmdQueue.pop();
@@ -215,7 +215,7 @@ export default class DebugSession extends events.EventEmitter {
     // from the debugger, but since we process each line individually as it comes in this
     // particular marker is of no use
 
-   
+
     if (line.match(/^\(gdb\)\s*/) || (line === '')) {
       if (!this._isStarted) {
         this.emit(Events.EVENT_SESSION_STARTED);
@@ -400,7 +400,7 @@ export default class DebugSession extends events.EventEmitter {
     // executable and symbol files to be specified separately the LLDB MI driver
     // currently (30-Mar-2015) only supports this one command.
 
-    
+
     file=file.replace(/\\/g,'/');
     return this.executeCommand(`file-exec-and-symbols ${file}`);
   }
@@ -774,7 +774,7 @@ export default class DebugSession extends events.EventEmitter {
    *
    * @param options.frameLevel Stack index of the frame for which to retrieve locals,
    *                           zero for the innermost frame, one for the frame from which the call
-   *                           to the innermost frame originated, etc. 
+   *                           to the innermost frame originated, etc.
    */
   selectStackFrame(
     options?: {frameLevel?: number }): Promise<void> {
@@ -1174,6 +1174,16 @@ export default class DebugSession extends events.EventEmitter {
       return extractWatchChildren(output.children);
     });
   }
+
+  getAddressInt(address: string): Promise<any | undefined> {
+    //var fullCmd: string = `interpreter-exec console "x/xw ${address}"`;
+    var fullCmd: string = `data-read-memory ${address} x 4 4 1`;
+
+    return this.getCommandOutput(fullCmd, null, (output: any) => {
+      return output;
+    });
+  }
+
 
   /**
    * Sets the output format for the value of a watch.
@@ -1597,7 +1607,7 @@ export default class DebugSession extends events.EventEmitter {
   }
 
   /**
-   * Attach to a process pid or a file file outside of GDB, or a thread group gid. 
+   * Attach to a process pid or a file file outside of GDB, or a thread group gid.
    *
    * Execution may stop before the inferior finishes running due to a number of reasons,
    * for example a breakpoint being hit.
@@ -1613,14 +1623,14 @@ export default class DebugSession extends events.EventEmitter {
 
   /**
    * Run native command
-   * @param cmd 
+   * @param cmd
    */
   execNativeCommand(cmd: string): Promise<any>  {
     return this.getNativeCommandOutput(cmd, null, (output: any) => {
       return output;
     }).catch((e) => {
       logger.error(e);
-      
+
       throw e;
 
     });
@@ -1637,14 +1647,14 @@ export default class DebugSession extends events.EventEmitter {
 
   /**
    * Copy file hostfile from the host system (the machine running GDB) to targetfile on the target system.
-   * @param hostfile 
-   * @param targetfile 
+   * @param hostfile
+   * @param targetfile
    */
   targetFilePut(hostfile:String, targetfile:string): Promise<void> {
     var fullCmd: string = `target-file-put ${hostfile} ${targetfile}`;
     return this.executeCommand(fullCmd, null);
   }
-  
+
 
 
 }

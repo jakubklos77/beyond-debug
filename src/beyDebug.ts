@@ -23,6 +23,7 @@ import path = require('path');
 import { BeyDbgSessionSSH } from './beyDbgSessionSSH';
 import { ILaunchRequestArguments,IAttachRequestArguments } from './argments';
 import { isLanguagePascal } from './util';
+import { log } from 'console';
 
 function timeout(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -39,6 +40,7 @@ enum EMsgType {
 	info3,
 }
 const EVENT_CONFIG_DOWN='configdown';
+const NULL_POINTER = '0x0';
 
 export class BeyDebug extends DebugSession {
 
@@ -858,19 +860,20 @@ export class BeyDebug extends DebugSession {
 
 		} else {
 
-			if(id.startsWith('**FLIST**')){  //pascal TStringList
-				let vid=id.replace('**FLIST**','');
-				let strs=vid.split(':');
-				let cnt=strs[strs.length-1];
+			// Array list
+			if (id.startsWith('**ARRAY**')){
 
-				for(var i=0;i<Number.parseInt(cnt);i++){
-					let exp=strs[0]+'.FLIST^['+i+']';
-					let val=await this.dbgSession.evaluateExpression(exp);
-					let m=val.match(/'(.*?)'/);
-					if(m!=null){
-						val=m[1];
-					}
-					if(i>100){
+				// Get vid
+				let vid = id.replace('**ARRAY**','');
+
+				// Get id:length
+				let strs = vid.split(':');
+
+				// Count of items
+				let cnt = strs[strs.length - 1];
+
+				for (var i = 0; i < Number.parseInt(cnt); i++) {
+					if (i > 100) {
 						variables.push({
 							name: '[.]',
 							type: 'string',
@@ -878,59 +881,63 @@ export class BeyDebug extends DebugSession {
 							variablesReference: 0
 						});
 						break;
-					}else{
-						variables.push({
-							name: '['+i+']',
-							type: 'string',
-							value: this.decodeString(val,'ANSISTRING'),
-							variablesReference: 0
-						});
-					}
+					} else {
+						// Get exp
+						let exp = await this.dbgSession.getWatchExpression(strs[0]);
+						exp = exp.replace('->', '.');
+						exp = exp + "^[" + i + "]"
 
+						// Add new watch
+						let c = await this.dbgSession.addWatch(exp, {
+							frameLevel: this._currentFrameLevel,
+							threadId: this._currentThreadId?.id
+						}).catch(() => {
+						});
+
+						// Create and push a new array member linking to the watch
+						if (c) {
+							let newVid = this._variableHandles.create(c.id);
+							variables.push({
+								name: '[' + i + ']',
+								type: 'string',
+								value: '{...}',
+								variablesReference: newVid
+							});
+						}
+					}
 				}
 
-			  //let s=await	this.dbgSession.evaluateExpression(id.replace('**items**',''));
-			}else
-			{
+			} else {
+
 				let childs = await this.dbgSession.getWatchChildren(id, { detail: dbg.VariableDetailLevel.All }).catch((e) => {
 					return [];
 				});
 				for (const c of childs) {
 					let vid = 0;
 
+					// Handle watch
 					this.handleWatchProcessor(c);
 
+					// Other pascal
 					if (this.isPascal) {
 
-						// TStringList
-						if(c.expressionType=='PSTRINGITEMLIST' || c.expressionType=='TANSISTRINGITEMLIST'){
-							let exp= await this.dbgSession.getWatchExpression(id);
-							let cnt=await this.dbgSession.getWatchValue(id+'.FCOUNT');
-							exp=exp.replace('->','.');
-							vid = this._variableHandles.create('**FLIST**'+exp+':'+cnt);
+						// Get short string value
+						let stringVal = await this.getShortStringValue(c.expressionType, c.childCount, c.id);
+						if (stringVal !== undefined) {
+
+							// Push string
 							variables.push({
-								name:'Strings',
-								type:'array',
-								value:'Strings['+cnt+']',
-								variablesReference:vid
+								name: c.expression,
+								type:'SHORTSTRING',
+								value: this.decodeString(stringVal, "ANSISTRING"),
+								variablesReference: 0
 							});
 							continue;
-						 } else {
-
-							// Get short string value
-							let stringVal = await this.getShortStringValue(c.expressionType, c.childCount, c.id);
-							if (stringVal !== undefined) {
-
-								// Push string
-								variables.push({
-									name: c.expression,
-									type:'string',
-									value: this.decodeString(stringVal, "ANSISTRING"),
-									variablesReference: 0
-								});
-								continue;
-							}
 						}
+
+						// Get array
+						if (await this.getArrayOfValue(c.expression, c.expressionType, c.childCount, c.id, variables))
+							continue;
 					}
 
 					if (c.childCount > 0) {
@@ -1020,19 +1027,65 @@ export class BeyDebug extends DebugSession {
 
 			if (watch.expressionType == 'ANSISTRING') {
 				// check if value not blank
-				if (watch.value != '0x0') {
+				if (watch.value != NULL_POINTER) {
 					// get just the string
 					watch.value = this.decodeString(watch.value.split(' ').slice(1).join(' '), watch.expressionType);
 				} else {
 					watch.value = "''";
 				}
 				watch.childCount = 0;
-				watch.expressionType = 'string';
 
 				return true;
 			}
 		}
 
+		return false;
+	}
+
+	private async getArrayOfValue(expression: string, expressionType: string, childCount: number, id: string, variables: DebugProtocol.Variable[]): Promise<boolean> {
+
+
+		// We have an array of
+		if (expressionType.match(/array of .+/)) {
+
+			// Get address
+			let address = await this.dbgSession.getWatchValue(id);
+			if (address === NULL_POINTER) {
+					variables.push({
+						name: expression,
+						type: expressionType,
+						value: '[0]',
+						variablesReference: 0
+					});
+					return true;
+				}
+
+			// Get length
+			let memory = await this.dbgSession.getAddressInt(address + '-16');
+			if (memory === undefined)
+				return false;
+
+			// Convert hexLen to a number
+			let length = parseInt(memory.memory[0].data[0], 16);
+			if (isNaN(length))
+				return false;
+
+			let vid = this._variableHandles.create('**ARRAY**' + id + ':' + length);
+
+			variables.push({
+				name: expression,
+				type: expressionType,
+				value: '[' + length + ']',
+				variablesReference: vid
+			});
+
+			return true;
+
+			// Construct eval
+			// Name + '^[]'
+			//let exp = await this.dbgSession.getWatchExpression(id);
+
+		}
 		return false;
 	}
 
