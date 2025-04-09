@@ -1127,7 +1127,7 @@ export class BeyDebug extends DebugSession {
 			if (stringChilds.length == 2) {
 
 				// We have a short string indeed
-				if (stringChilds[0].expression.toLowerCase() == 'length' && stringChilds[1].expression.toLowerCase() == 'st') {
+				if (stringChilds[0].expression == 'length' && stringChilds[1].expression == 'st') {
 					let stringArr = await this.dbgSession.getWatchChildren(stringChilds[1].id, { detail: dbg.VariableDetailLevel.All }).catch((e) => {
 						return [];
 					});
