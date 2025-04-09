@@ -213,6 +213,9 @@ export class BeyDebug extends DebugSession {
 		});
 		this.dbgSession.on(dbg.EVENT_SIGNAL_RECEIVED, (e: dbg.ISignalReceivedEvent) => {
 			logger.log('signal_receive:'+e.signalCode);
+			// If this is not handled that we receive select.c breakpoints when breakpoints are toggled in VSCode...
+			if (e.signalCode===undefined)
+				return;
 			let event=new StoppedEvent('signal', e.threadId,e.signalMeaning);
 			event.body['text']=e.signalMeaning;
 			event.body['description']=e.signalMeaning;
@@ -537,9 +540,10 @@ export class BeyDebug extends DebugSession {
 
 		}
 
-
-
-
+		if (this.isPascal) {
+			// Pascal exceptions
+			await this.dbgSession.addFPCExceptionBreakpoint();
+		}
 
 		await this.dbgSession.startInferior({stopAtStart: args.stopAtEntry}).catch((e) => {
 			this.sendMsgToDebugConsole(e.message, EMsgType.error);

@@ -509,6 +509,10 @@ export default class DebugSession extends events.EventEmitter {
     return this.executeCommand('break-delete ' + breakId);
   }
 
+  addFPCExceptionBreakpoint(): Promise<void> {
+    return this.getNativeCommandOutput('break fpc_raiseexception');
+  }
+
   /**
    * Removes multiple breakpoints.
    */

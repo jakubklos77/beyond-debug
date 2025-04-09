@@ -11,7 +11,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 class RefreshButton implements vscode.QuickInputButton {
     get iconPath(): { dark: vscode.Uri; light: vscode.Uri } {
-        
+
         const refreshImagePathDark: string = util.getExtensionFilePath("assets/Refresh_inverse.svg");
         const refreshImagePathLight: string = util.getExtensionFilePath("assets/Refresh.svg");
 
