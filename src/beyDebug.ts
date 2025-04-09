@@ -654,6 +654,11 @@ export class BeyDebug extends DebugSession {
 			return;
 		}
 
+		if (this.isPascal) {
+			// Pascal exceptions
+			await this.dbgSession.addFPCExceptionBreakpoint();
+		}
+
 		await this.dbgSession.resumeInferior();
 		this._isAttached=true;
 		this.sendResponse(response);
