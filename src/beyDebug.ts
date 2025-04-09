@@ -928,7 +928,7 @@ export class BeyDebug extends DebugSession {
 							// Push string
 							variables.push({
 								name: c.expression,
-								type:'SHORTSTRING',
+								type:'string',
 								value: this.decodeString(stringVal, "ANSISTRING"),
 								variablesReference: 0
 							});
@@ -1034,6 +1034,7 @@ export class BeyDebug extends DebugSession {
 					watch.value = "''";
 				}
 				watch.childCount = 0;
+				watch.expressionType = 'string';
 
 				return true;
 			}
@@ -1046,7 +1047,7 @@ export class BeyDebug extends DebugSession {
 
 
 		// We have an array of
-		if (expressionType.match(/array of .+/)) {
+		if (expressionType.match(/array of .+/) || id.includes('.*')) {
 
 			// Special var.*<OBJ> VSCode hover issue
 			if (id.includes('.*')) {
@@ -1058,18 +1059,36 @@ export class BeyDebug extends DebugSession {
 			// Get address
 			let address = await this.dbgSession.getWatchValue(id);
 
+			// 0x0
 			if (address === NULL_POINTER) {
-					variables.push({
-						name: expression,
-						type: expressionType,
-						value: '[0]',
-						variablesReference: 0
-					});
-					return true;
-				}
+				variables.push({
+					name: expression,
+					type: expressionType,
+					value: '[0]',
+					variablesReference: 0
+				});
+				return true;
+			}
+
+			// We have a pointer and a value (0x234242 value)
+			if (address.includes(' ')) {
+
+				// Get the value
+				let strs = address.split(' ').slice(1).join(' ');
+
+				// Push
+				variables.push({
+					name: expression,
+					type: expressionType,
+					value: strs,
+					variablesReference: 0
+				});
+
+				return true;
+			}
 
 			// Get length
-			let memory = await this.dbgSession.getAddressInt(address + '-16');
+			let memory = await this.dbgSession.getAddressInt(address + '-8');
 			if (memory === undefined)
 				return false;
 
@@ -1097,7 +1116,7 @@ export class BeyDebug extends DebugSession {
 	private async getShortStringValue(expressionType: string, childCount: number, id: string): Promise<string | undefined> {
 
 		// Short string handling (we may have a string)
-		if (expressionType.includes('STRING') && childCount == 2) {
+		if (/string/i.test(expressionType) && childCount == 2) {
 
 			// Get its children
 			let stringChilds = await this.dbgSession.getWatchChildren(id, { detail: dbg.VariableDetailLevel.All }).catch((e) => {
@@ -1108,7 +1127,7 @@ export class BeyDebug extends DebugSession {
 			if (stringChilds.length == 2) {
 
 				// We have a short string indeed
-				if (stringChilds[0].expression == 'length' && stringChilds[1].expression == 'st') {
+				if (stringChilds[0].expression.toLowerCase() == 'length' && stringChilds[1].expression.toLowerCase() == 'st') {
 					let stringArr = await this.dbgSession.getWatchChildren(stringChilds[1].id, { detail: dbg.VariableDetailLevel.All }).catch((e) => {
 						return [];
 					});
