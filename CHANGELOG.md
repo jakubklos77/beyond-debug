@@ -1,37 +1,45 @@
-## [1.9.17] - 2025-04-09
+## WIP
+## [1.9.17] - 2025-04-10
 ## Added
 - FPC exceptions catching
 ## Fixed
-- SIGINT select. breakpoint not trigged on breakpoint toggle
+- SIGINT select.c breakpoint not trigged on breakpoint toggle
 
 ## [1.9.16] - 2025-04-09
 ## Added
- - FPC arrays support
- - FPC shortstring, ansistring handling, decoding and utf8 support
- - option activateTerminal
- - option clearTerminal
+- general arrays support
+## Fixed
+- string types used instead
+- arrays length fixed
+
+## [1.9.15] - 2025-04-8
+## Added
+- option activateTerminal
+- option clearTerminal
+- FPC arrays support
+- FPC shortstring, ansistring handling, decoding and utf8 support
 
 ## [0.9.15] - 2023-05-30
 ## Fixed
- - Resolve the issue of not being able to set breakpoints when using SSH for remote debugging in Linux.
+- Resolve the issue of not being able to set breakpoints when using SSH for remote debugging in Linux.
 
 ## [0.9.14] - 2022-11-23
 ## Added
- - Add language argument for launching c++, pascal program.
+- Add language argument for launching c++, pascal program.
 
 ## [0.9.12] - 2022-11-21
 ## Added
- - Open SSH shell as terminal for debug.
- - Show progress when uploading file through ssh.
- - Only modified files will be uploaded.
+- Open SSH shell as terminal for debug.
+- Show progress when uploading file through ssh.
+- Only modified files will be uploaded.
 
 ## [0.9.11] - 2022-10-25
 ## Added
- - Use gdb through SSH
+- Use gdb through SSH
 
 ## [0.9.10] - 2022-10-17
 ## Fixed
- - Breakpointer not inserted after attach
+- Breakpointer not inserted after attach
 
 ## [0.9.9] -  2022-10-11
 ### Fixed
