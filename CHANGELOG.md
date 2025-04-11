@@ -1,7 +1,9 @@
 ## WIP
-## [1.9.17] - 2025-04-10
+## [1.9.17] - 2025-04-11
 ## Added
 - FPC exceptions catching
+- Call stack #NaN fixed
+- FPC exception name retrieved from $rdi and displayed as an error message
 ## Fixed
 - SIGINT select.c breakpoint not trigged on breakpoint toggle
 

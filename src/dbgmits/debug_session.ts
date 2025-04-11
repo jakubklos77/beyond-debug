@@ -1180,7 +1180,6 @@ export default class DebugSession extends events.EventEmitter {
   }
 
   getAddressInt(address: string): Promise<any | undefined> {
-    //var fullCmd: string = `interpreter-exec console "x/xw ${address}"`;
     var fullCmd: string = `data-read-memory ${address} x 4 4 1`;
 
     return this.getCommandOutput(fullCmd, null, (output: any) => {
@@ -1188,6 +1187,13 @@ export default class DebugSession extends events.EventEmitter {
     });
   }
 
+  getFPCExceptionDataDisassemble(address: string): Promise<any | undefined> {
+    var fullCmd: string = `data-disassemble -a *${address}`;
+
+    return this.getCommandOutput(fullCmd, null, (output: any) => {
+      return output;
+    });
+  }
 
   /**
    * Sets the output format for the value of a watch.
@@ -1570,6 +1576,8 @@ export default class DebugSession extends events.EventEmitter {
         let currentThread: IThreadInfo;
         let threads: IThreadInfo[] = output.threads.map((data: any) => {
           let thread: IThreadInfo = extractThreadInfo(data);
+          // If this is not done then VSCode displays "Thread #NaN" in the UI
+          thread.targetId = thread.targetId.replace(/^Thread /, '');
           if (thread.id === currentThreadId) {
             currentThread = thread;
           }

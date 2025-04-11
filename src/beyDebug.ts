@@ -792,12 +792,67 @@ export class BeyDebug extends DebugSession {
 		}
 		this._watchs.clear();
 
+		let isAnySource = false;
+		let fpcException = undefined;
 		response.body = {
 			stackFrames: frames.map(f => {
-				return new StackFrame(f.level, f.func, f.filename ? new Source(f.filename!, f.fullname) : null, this.convertDebuggerLineToClient(f.line!));
+
+				// FPC exception
+				if (f.level == 0 && f.func == 'fpc_raiseexception') {
+
+					// Mark exception
+					fpcException = f;
+				}
+
+				// Any source
+				if (f.filename)
+					isAnySource = true;
+
+				return new StackFrame(
+					f.level,
+					f.func,
+					f.filename ? new Source(f.filename!, f.fullname) : null,
+					this.convertDebuggerLineToClient(f.line!)
+				);
 			}),
 			totalFrames: frames.length
 		};
+
+		// FPC exceptions
+		if (fpcException) {
+
+			let exceptionName = "";
+
+			// Get exception info for x86_64
+			if (process.arch === 'x64') {
+				let info = await this.dbgSession.getFPCExceptionDataDisassemble("($rdi)");
+				if (info?.asm_insns[0]) {
+					let funcName = info?.asm_insns[0]["func-name"];
+					if (funcName) {
+						exceptionName = funcName.match(/\$\$_(.*)$/)?.[1] || funcName;
+					}
+				}
+			}
+
+			// Exception error message
+			vscode.window.showErrorMessage("Exception occurred: " + exceptionName);
+
+			// Exception without source file
+			if (!isAnySource) {
+				// Set the currently open file otherwise VSCode does not focus the thread in the Call stack list
+				const editor = vscode.window.activeTextEditor;
+				if (editor) {
+					const document = editor.document;
+					const fileName = document.fileName;
+					const cursorPosition = editor.selection.active;
+
+					// Set it to frame 0 so VSCode focuses the thread
+					response.body.stackFrames[0].source = new Source('Exception', fileName);
+					response.body.stackFrames[0].line = cursorPosition.line + 1;
+				}
+			}
+		}
+
 		this.sendResponse(response);
 	}
 
