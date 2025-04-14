@@ -1,9 +1,10 @@
 ## WIP
-## [1.9.17] - 2025-04-11
+## [1.9.17] - 2025-04-14
 ## Added
 - FPC exceptions catching
 - Call stack #NaN fixed
 - FPC exception name retrieved from $rdi and displayed as an error message
+- FPC class members - function Getter vs Fvar member for hover watch support
 ## Fixed
 - SIGINT select.c breakpoint not trigged on breakpoint toggle
 

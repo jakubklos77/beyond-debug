@@ -825,7 +825,15 @@ export class BeyDebug extends DebugSession {
 
 			// Get exception info for x86_64
 			if (process.arch === 'x64') {
-				let info = await this.dbgSession.getFPCExceptionDataDisassemble("($rdi)");
+
+				let info = undefined;
+				// Try *($rdi) and ($rdi)^ as both are used and sometimes on works and not the other
+				try {
+					info = await this.dbgSession.getFPCExceptionDataDisassemble("*($rdi)");
+				} catch (error) {
+					info = await this.dbgSession.getFPCExceptionDataDisassemble("($rdi)^");
+				}
+
 				if (info?.asm_insns[0]) {
 					let funcName = info?.asm_insns[0]["func-name"];
 					if (funcName) {
@@ -1152,9 +1160,14 @@ export class BeyDebug extends DebugSession {
 			}
 
 			// Get length
-			let memory = await this.dbgSession.getAddressInt(address + '-8');
-			if (memory === undefined)
+			let memory = undefined
+			try {
+				memory = await this.dbgSession.getAddressInt(address + '-8');
+				if (memory === undefined)
+					return false;
+			} catch {
 				return false;
+			}
 
 			// Convert hexLen to a number
 			let length = parseInt(memory.memory[0].data[0], 16);
@@ -1249,12 +1262,25 @@ export class BeyDebug extends DebugSession {
 			let watch: void | IWatchInfo = this._watchs.get(key);
 
 			if (!watch) {
-				watch = await this.dbgSession.addWatch(this.varUpperCase?args.expression.toUpperCase():args.expression, {
+				let exp = this.varUpperCase?args.expression.toUpperCase():args.expression;
+				watch = await this.dbgSession.addWatch(exp, {
 					frameLevel: args.frameId,
 					threadId: this._currentThreadId?.id
-				}).catch((e) => {
+				}).catch((e) => { });
 
-				});;
+				// We have a pascal and a dotted expression (probably a class with a member that uses a function Getter
+				if (!watch && this.isPascal && exp.includes('.')) {
+
+					// Replace all . with .F (lets look for a hidden "F" variable in the class)
+					let newExp = exp.replace(/\.(?!FF)(\w)/g, '.F$1');
+
+					// Try again
+					watch = await this.dbgSession.addWatch(newExp, {
+						frameLevel: args.frameId,
+						threadId: this._currentThreadId?.id
+					}).catch((e) => { });
+					}
+
 				if (!watch) {
 					response.body = {
 						result: '<null>',

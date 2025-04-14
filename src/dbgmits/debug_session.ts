@@ -1188,8 +1188,8 @@ export default class DebugSession extends events.EventEmitter {
   }
 
   getFPCExceptionDataDisassemble(address: string): Promise<any | undefined> {
-    var fullCmd: string = `data-disassemble -a *${address}`;
 
+    var fullCmd: string = `data-disassemble -a ${address}`;
     return this.getCommandOutput(fullCmd, null, (output: any) => {
       return output;
     });
