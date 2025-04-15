@@ -1,5 +1,4 @@
-## WIP
-## [1.9.17] - 2025-04-14
+## [1.9.17] - 2025-04-15
 ## Added
 - FPC exceptions catching
 - Call stack #NaN fixed
@@ -7,6 +6,7 @@
 - FPC class members - function Getter vs Fvar member for hover watch support
 ## Fixed
 - SIGINT select.c breakpoint not trigged on breakpoint toggle
+- arrays: length +1
 
 ## [1.9.16] - 2025-04-09
 ## Added

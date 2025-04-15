@@ -1174,6 +1174,10 @@ export class BeyDebug extends DebugSession {
 			if (isNaN(length))
 				return false;
 
+			// 0x00 address 0 items
+			// non zero address +1 items
+			length++;
+
 			// Mark as array
 			let vid = this._variableHandles.create('**ARRAY**' + id + ':' + length);
 
