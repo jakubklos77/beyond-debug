@@ -153,7 +153,7 @@ class InlineDebugAdapterFactory implements vscode.DebugAdapterDescriptorFactory 
 
 	createDebugAdapterDescriptor(_session: vscode.DebugSession): ProviderResult<vscode.DebugAdapterDescriptor> {
 		let dbg=new BeyDebug();
-		memview.setCurrentDebugSession(dbg.getBeyDbgSession());
+		memview.setCurrentDebugSession(dbg);
 		return new vscode.DebugAdapterInlineImplementation(dbg);
 	}
 }

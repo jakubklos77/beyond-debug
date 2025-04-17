@@ -1,3 +1,7 @@
+## [1.9.18] - 2025-04-15
+## Fixed
+- memory view fixed
+
 ## [1.9.17] - 2025-04-15
 ## Added
 - FPC exceptions catching
