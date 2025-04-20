@@ -2,6 +2,12 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"type": "shell",
+			"problemMatcher": [],
+			"command": "npx vsce package -o ~/Downloads/",
+			"label": "build VSIX package",
+		},
+		{
 			"type": "npm",
 			"script": "watch",
 			"problemMatcher": "$tsc-watch",
@@ -23,11 +29,6 @@
 			"problemMatcher": [],
 			"label": "npm: esbuild",
 			"detail": "npm run -S esbuild-base -- --sourcemap"
-		},
-		{
-			"type": "shell",
-			"command": "npx vsce package -o ~/Downloads/",
-			"label": "build VSIX package",
 		},
 	]
 }
