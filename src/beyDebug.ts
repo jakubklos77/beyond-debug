@@ -389,7 +389,7 @@ export class BeyDebug extends DebugSession {
 
 		let args=_args as ILaunchRequestArguments;
 		this.initDbSession(args.ssh?true:false);
-		vscode.commands.executeCommand('workbench.panel.repl.view.focus');
+		//vscode.commands.executeCommand('workbench.panel.repl.view.focus');
 		this.defaultStringCharset = args.defaultStringCharset ? args.defaultStringCharset : "utf-8";
 		if(args.language){
 			this.language=args.language;
@@ -441,7 +441,7 @@ export class BeyDebug extends DebugSession {
 
 			return 1;
 		});
-		if (ret > 0) {
+		if (typeof ret === 'number' && ret > 0) {
 			return;
 		}
 
@@ -461,7 +461,7 @@ export class BeyDebug extends DebugSession {
 					vscode.window.showErrorMessage(e.message);
 					return 1;
 				});
-				if (result > 0) {
+				if (typeof result === 'number' && result > 0) {
 					this.sendEvent(new TerminatedEvent(false));
 					return;
 				}
@@ -475,7 +475,7 @@ export class BeyDebug extends DebugSession {
 					vscode.window.showErrorMessage(e.message);
 					return 1;
 				});
-				if (result > 0) {
+				if (typeof result === 'number' && result > 0) {
 					this.sendEvent(new TerminatedEvent(false));
 					return;
 				}
@@ -581,7 +581,7 @@ export class BeyDebug extends DebugSession {
 		//let prov= NativeAttachItemsProviderFactory.Get();
 		//let result=await showQuickPick(prov.getAttachItems);
 
-		vscode.commands.executeCommand('workbench.panel.repl.view.focus');
+		//vscode.commands.executeCommand('workbench.panel.repl.view.focus');
 		this.defaultStringCharset = args.defaultStringCharset ? args.defaultStringCharset : "utf-8";
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)

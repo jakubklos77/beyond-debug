@@ -7,7 +7,7 @@ import * as stream from 'stream';
 import * as parser from './mi_output_parser';
 import { RecordType } from './mi_output';
 import * as Events from './events';
-import { logger } from '@vscode/debugadapter';
+import { logger, Logger } from '@vscode/debugadapter';
 import {
   IBreakpointInfo, IBreakpointLocationInfo,
   IStackFrameInfo, IStackFrameArgsInfo, IStackFrameVariablesInfo, IVariableInfo,
@@ -20,7 +20,6 @@ import {
   extractAsmBySourceLine, extractThreadInfo
 } from './extractors';
 import { CommandFailedError, MalformedResponseError } from './errors';
-import { Logger } from 'vscode-debugadapter/lib/logger';
 
 // aliases
 type ReadLine = readline.ReadLine;
@@ -87,7 +86,7 @@ export default class DebugSession extends events.EventEmitter {
   get isStarted() {
     return this._isStarted;
   }
-  get logger(): Logger {
+  get logger(): Logger.Logger {
     return logger;
   }
 
