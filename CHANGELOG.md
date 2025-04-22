@@ -1,6 +1,7 @@
-## [1.9.18] - 2025-04-15
+## [1.9.18] - 2025-04-22
 ## Fixed
 - memory view fixed
+- Ctrl+F (find dialog) vs shortcut conflict attempt
 
 ## [1.9.17] - 2025-04-15
 ## Added
