@@ -1,3 +1,7 @@
+## [1.9.19] - 2025-04-28
+## Fixed
+- Nil instances display members no more
+
 ## [1.9.18] - 2025-04-22
 ## Fixed
 - memory view fixed

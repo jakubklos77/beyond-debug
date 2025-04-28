@@ -41,6 +41,7 @@ enum EMsgType {
 }
 const EVENT_CONFIG_DOWN='configdown';
 const NULL_POINTER = '0x0';
+const NULL_LABEL = '<null>';
 
 export class BeyDebug extends DebugSession {
 
@@ -226,7 +227,7 @@ export class BeyDebug extends DebugSession {
 		});
 
 	}
-	private decodeString(value?:string,expressionType?:string):string{
+	private resultString(value?:string,expressionType?:string):string{
 
 		if (expressionType===undefined){
 			return '';
@@ -306,6 +307,10 @@ export class BeyDebug extends DebugSession {
 
 						let bf = result.split('').map((e)=>{return e.charCodeAt(0);});
 						return "'" + iconv.decode(Buffer.from(bf),this.defaultStringCharset) + "'";
+
+					// Null pointer
+					} else if (value === NULL_POINTER) {
+						return NULL_LABEL;
 					}
 					break;
 				default:
@@ -917,14 +922,14 @@ export class BeyDebug extends DebugSession {
 				this._locals.watch.push(c);
 
 				let vid = 0;
-				if (c.childCount > 0) {
+				if (c.childCount > 0 && c.value !== NULL_POINTER) {
 				  vid = this._variableHandles.create(c.id);
 				}
 
 				variables.push({
 					name: v.name,
 					type: c.expressionType,
-					value: this.decodeString(c.value,c.expressionType),
+					value: this.resultString(c.value,c.expressionType),
 					variablesReference: vid
 				});
 
@@ -1001,7 +1006,7 @@ export class BeyDebug extends DebugSession {
 							variables.push({
 								name: c.expression,
 								type:'string',
-								value: this.decodeString(stringVal, "ANSISTRING"),
+								value: this.resultString(stringVal, "ANSISTRING"),
 								variablesReference: 0
 							});
 							continue;
@@ -1012,14 +1017,14 @@ export class BeyDebug extends DebugSession {
 							continue;
 					}
 
-					if (c.childCount > 0) {
+					if (c.childCount > 0 && c.value !== NULL_POINTER) {
 					   vid = this._variableHandles.create(c.id);
 					}
 
 				   variables.push({
 					   name: c.expression,
 					   type: c.expressionType,
-					   value: this.decodeString(c.value,c.expressionType),
+					   value: this.resultString(c.value,c.expressionType),
 					   variablesReference: vid
 				   });
 
@@ -1101,7 +1106,7 @@ export class BeyDebug extends DebugSession {
 				// check if value not blank
 				if (watch.value != NULL_POINTER) {
 					// get just the string
-					watch.value = this.decodeString(watch.value.split(' ').slice(1).join(' '), watch.expressionType);
+					watch.value = this.resultString(watch.value.split(' ').slice(1).join(' '), watch.expressionType);
 				} else {
 					watch.value = "''";
 				}
@@ -1303,7 +1308,7 @@ export class BeyDebug extends DebugSession {
 						// Get short string value
 						let shortString = await this.getShortStringValue(watch.expressionType, watch.childCount, watch.id);
 						if (shortString !== undefined) {
-							watch.value = this.decodeString(shortString, "ANSISTRING");
+							watch.value = this.resultString(shortString, "ANSISTRING");
 							watch.expressionType = 'string';
 							watch.childCount = 0;
 						}
@@ -1325,11 +1330,11 @@ export class BeyDebug extends DebugSession {
 			}
 
 			let vid = 0;
-			if (watch.childCount > 0) {
+			if (watch.childCount > 0 && watch.value !== NULL_POINTER) {
 				vid = this._variableHandles.create(watch.id);
 			}
 			response.body = {
-				result: this.decodeString(watch.value,watch.expressionType),
+				result: this.resultString(watch.value,watch.expressionType),
 				type: watch.expressionType,
 				variablesReference: vid
 			};
