@@ -516,8 +516,9 @@ export default class DebugSession extends events.EventEmitter {
    * Removes multiple breakpoints.
    */
   removeBreakpoints(breakIds: number[]): Promise<void> {
-    // FIXME: LLDB MI driver only supports removing one breakpoint at a time,
-    //        so multiple breakpoints need to be removed one by one.
+    if (breakIds.length === 0) {
+      return Promise.resolve();
+    }
     return this.executeCommand('break-delete ' + breakIds.join(' '));
   }
 

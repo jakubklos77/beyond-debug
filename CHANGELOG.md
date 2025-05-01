@@ -1,6 +1,7 @@
 ## [1.9.19] - 2025-04-28
 ## Fixed
 - Nil instances display members no more
+- Breakpoint issue (sometimes all breakpoints were removed)
 
 ## [1.9.18] - 2025-04-22
 ## Fixed
