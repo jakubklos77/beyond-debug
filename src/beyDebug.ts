@@ -53,11 +53,6 @@ export class BeyDebug extends DebugSession {
 	private _isRunning = false;
 	private _isAttached = false;
 
-
-	private _progressId = 10000;
-	private _cancelledProgressId: string | undefined = undefined;
-	private _isProgressCancellable = true;
-
 	private _breakPoints = new Map<string, DebugProtocol.Breakpoint[]>();
 
 	private _locals: { frame?: IStackFrameInfo, vars: IVariableInfo[], watch: IWatchInfo[] } = { frame: null, vars: [], watch: [] };
@@ -308,9 +303,6 @@ export class BeyDebug extends DebugSession {
 						let bf = result.split('').map((e)=>{return e.charCodeAt(0);});
 						return "'" + iconv.decode(Buffer.from(bf),this.defaultStringCharset) + "'";
 
-					// Null pointer
-					} else if (value === NULL_POINTER) {
-						return NULL_LABEL;
 					}
 					break;
 				default:
@@ -893,7 +885,7 @@ export class BeyDebug extends DebugSession {
 
 		const id = this._variableHandles.get(args.variablesReference);
 
-
+		// Local variables
 		if (id === 'locals::') {
 			for (const w of this._locals.watch) {
 				await this.dbgSession.removeWatch(w.id).catch(() => { });
@@ -913,11 +905,10 @@ export class BeyDebug extends DebugSession {
 				}).catch(() => {
 
 				});
-				if (!c) {
+				if (!c)
 					continue;
-				}
 
-				this.handleWatchProcessor(c);
+				await this.handleWatchProcessor(c);
 
 				this._locals.watch.push(c);
 
@@ -929,7 +920,7 @@ export class BeyDebug extends DebugSession {
 				variables.push({
 					name: v.name,
 					type: c.expressionType,
-					value: this.resultString(c.value,c.expressionType),
+					value: c.value,
 					variablesReference: vid
 				});
 
@@ -992,30 +983,7 @@ export class BeyDebug extends DebugSession {
 				for (const c of childs) {
 					let vid = 0;
 
-					// Handle watch
-					this.handleWatchProcessor(c);
-
-					// Other pascal
-					if (this.isPascal) {
-
-						// Get short string value
-						let stringVal = await this.getShortStringValue(c.expressionType, c.childCount, c.id);
-						if (stringVal !== undefined) {
-
-							// Push string
-							variables.push({
-								name: c.expression,
-								type:'string',
-								value: this.resultString(stringVal, "ANSISTRING"),
-								variablesReference: 0
-							});
-							continue;
-						}
-
-						// Get array
-						if (await this.processArrayValue(c.expression, c.expressionType, c.childCount, c.id, variables))
-							continue;
-					}
+					await this.handleWatchProcessor(c);
 
 					if (c.childCount > 0 && c.value !== NULL_POINTER) {
 					   vid = this._variableHandles.create(c.id);
@@ -1024,7 +992,7 @@ export class BeyDebug extends DebugSession {
 				   variables.push({
 					   name: c.expression,
 					   type: c.expressionType,
-					   value: this.resultString(c.value,c.expressionType),
+					   value: c.value,
 					   variablesReference: vid
 				   });
 
@@ -1098,10 +1066,11 @@ export class BeyDebug extends DebugSession {
 		this.sendResponse(response);
 	}
 
-	private handleWatchProcessor(watch: IWatchInfo): boolean {
+	private async handleWatchProcessor(watch: IWatchInfo): Promise<boolean> {
 
 		if (this.isPascal) {
 
+			// AnsiString
 			if (watch.expressionType == 'ANSISTRING') {
 				// check if value not blank
 				if (watch.value != NULL_POINTER) {
@@ -1115,35 +1084,52 @@ export class BeyDebug extends DebugSession {
 
 				return true;
 			}
+
+			// Get short string value
+			let shortString = await this.getShortStringValue(watch.expressionType, watch.childCount, watch.id);
+			if (shortString !== undefined) {
+				watch.value = this.resultString(shortString, "ANSISTRING");
+				watch.childCount = 0;
+				watch.expressionType = 'string';
+
+				return true;
+			}
+
+			// Get array
+			if (await this.processArrayValue(watch))
+				return true;
+
+			// Null pointer
+			if (watch.value === NULL_POINTER) {
+				watch.value = NULL_LABEL;
+
+				return true;
+			}
 		}
 
 		return false;
 	}
 
-	private async processArrayValue(expression: string, expressionType: string, childCount: number, id: string, variables: DebugProtocol.Variable[]): Promise<boolean> {
+	private async processArrayValue(watch: IWatchInfo): Promise<boolean> {
 
 
 		// We have an array of
-		if (expressionType.match(/array of .+/) || id.includes('.*')) {
+		if (watch.expressionType.match(/array of .+/) || watch.id.includes('.*')) {
 
 			// Special var.*<OBJ> VSCode hover issue
-			if (id.includes('.*')) {
+			if (watch.id.includes('.*')) {
 				// Get the starting var id
-				let strs = id.split('.*');
-				id = strs[0];
+				let strs = watch.id.split('.*');
+				watch.id = strs[0];
 			}
 
 			// Get address
-			let address = await this.dbgSession.getWatchValue(id);
+			let address = await this.dbgSession.getWatchValue(watch.id);
 
 			// 0x0
 			if (address === NULL_POINTER) {
-				variables.push({
-					name: expression,
-					type: expressionType,
-					value: '[0]',
-					variablesReference: 0
-				});
+				watch.value = '[0]';
+				watch.childCount = 0;
 				return true;
 			}
 
@@ -1153,47 +1139,45 @@ export class BeyDebug extends DebugSession {
 				// Get the value
 				let strs = address.split(' ').slice(1).join(' ');
 
-				// Push
-				variables.push({
-					name: expression,
-					type: expressionType,
-					value: strs,
-					variablesReference: 0
-				});
-
+				watch.value = strs;
+				watch.childCount = 0;
 				return true;
 			}
 
-			// Get length
-			let memory = undefined
-			try {
-				memory = await this.dbgSession.getAddressInt(address + '-8');
-				if (memory === undefined)
-					return false;
-			} catch {
-				return false;
-			}
+			let length = 0;
 
-			// Convert hexLen to a number
-			let length = parseInt(memory.memory[0].data[0], 16);
-			if (isNaN(length))
+			// Special argument array FPC gdb bug
+			if (address == '[0]') {
+
 				return false;
+
+			// Address is a pointer
+			} else {
+
+				// Get length
+				let memory = undefined
+				try {
+					memory = await this.dbgSession.getAddressInt(address + '-8');
+					if (memory === undefined)
+						return false;
+				} catch {
+					return false;
+				}
+
+				// Convert hexLen to a number
+				length = parseInt(memory.memory[0].data[0], 16);
+				if (isNaN(length))
+					return false;
+			}
 
 			// 0x00 address 0 items
 			// non zero address +1 items
 			length++;
 
-			// Mark as array
-			let vid = this._variableHandles.create('**ARRAY**' + id + ':' + length);
-
-			// Push with count
-			variables.push({
-				name: expression,
-				type: expressionType,
-				value: '[' + length + ']',
-				variablesReference: vid
-			});
-
+			// Mark id as an array
+			watch.id = '**ARRAY**' + watch.id + ':' + length;
+			watch.value = '[' + length + ']';
+			watch.childCount = length;
 			return true;
 		}
 		return false;
@@ -1300,20 +1284,7 @@ export class BeyDebug extends DebugSession {
 					return;
 				}
 
-				// Handle
-				if (!this.handleWatchProcessor(watch)) {
-
-					if (this.isPascal) {
-
-						// Get short string value
-						let shortString = await this.getShortStringValue(watch.expressionType, watch.childCount, watch.id);
-						if (shortString !== undefined) {
-							watch.value = this.resultString(shortString, "ANSISTRING");
-							watch.expressionType = 'string';
-							watch.childCount = 0;
-						}
-					}
-				}
+				await this.handleWatchProcessor(watch);
 
 				this._watchs.set(key, watch);
 
@@ -1326,6 +1297,8 @@ export class BeyDebug extends DebugSession {
 						watch.expressionType = upd[0].expressionType;
 						watch.childCount = upd[0].childCount;
 					}
+
+					await this.handleWatchProcessor(watch);
 				}
 			}
 
@@ -1334,44 +1307,13 @@ export class BeyDebug extends DebugSession {
 				vid = this._variableHandles.create(watch.id);
 			}
 			response.body = {
-				result: this.resultString(watch.value,watch.expressionType),
+				result: watch.value,
 				type: watch.expressionType,
 				variablesReference: vid
 			};
 		}
 
 		this.sendResponse(response);
-	}
-
-	private async progressSequence() {
-
-		const ID = '' + this._progressId++;
-
-		await timeout(100);
-
-		const title = this._isProgressCancellable ? 'Cancellable operation' : 'Long running operation';
-		const startEvent: DebugProtocol.ProgressStartEvent = new ProgressStartEvent(ID, title);
-		startEvent.body.cancellable = this._isProgressCancellable;
-		this._isProgressCancellable = !this._isProgressCancellable;
-		this.sendEvent(startEvent);
-		this.sendEvent(new OutputEvent(`start progress: ${ID}\n`));
-
-		let endMessage = 'progress ended';
-
-		for (let i = 0; i < 100; i++) {
-			await timeout(500);
-			this.sendEvent(new ProgressUpdateEvent(ID, `progress: ${i}`));
-			if (this._cancelledProgressId === ID) {
-				endMessage = 'progress cancelled';
-				this._cancelledProgressId = undefined;
-				this.sendEvent(new OutputEvent(`cancel progress: ${ID}\n`));
-				break;
-			}
-		}
-		this.sendEvent(new ProgressEndEvent(ID, endMessage));
-		this.sendEvent(new OutputEvent(`end progress: ${ID}\n`));
-
-		this._cancelledProgressId = undefined;
 	}
 
 	protected dataBreakpointInfoRequest(response: DebugProtocol.DataBreakpointInfoResponse, args: DebugProtocol.DataBreakpointInfoArguments): void {
