@@ -50,6 +50,7 @@ export class BeyDebug extends DebugSession {
 	private _configurationDone:boolean = false;
 
 	private _cancelationTokens = new Map<number, boolean>();
+	private _cancelledProgressId: string;
 	private _isRunning = false;
 	private _isAttached = false;
 

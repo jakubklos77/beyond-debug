@@ -1,7 +1,11 @@
+## [1.9.20] - 2025-05-13
+## Fixed
+- Breakpoint issue (sometimes all breakpoints were removed)
+- Centralized type handling for pascal
+
 ## [1.9.19] - 2025-04-28
 ## Fixed
 - Nil instances display members no more
-- Breakpoint issue (sometimes all breakpoints were removed)
 
 ## [1.9.18] - 2025-04-22
 ## Fixed
