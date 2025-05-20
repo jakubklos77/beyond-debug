@@ -1,3 +1,7 @@
+## [1.9.21] - 2025-05-20
+## Fixed
+- <null> variable has no children count
+
 ## [1.9.20] - 2025-05-13
 ## Fixed
 - Breakpoint issue (sometimes all breakpoints were removed)

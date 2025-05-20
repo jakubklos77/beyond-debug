@@ -1103,6 +1103,7 @@ export class BeyDebug extends DebugSession {
 			// Null pointer
 			if (watch.value === NULL_POINTER) {
 				watch.value = NULL_LABEL;
+				watch.childCount = 0;
 
 				return true;
 			}
