@@ -24,6 +24,7 @@ import { BeyDbgSessionSSH } from './beyDbgSessionSSH';
 import { ILaunchRequestArguments,IAttachRequestArguments } from './argments';
 import { isLanguagePascal } from './util';
 import { log } from 'console';
+import * as fs from 'fs';
 
 function timeout(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -210,13 +211,16 @@ export class BeyDebug extends DebugSession {
 		});
 		this.dbgSession.on(dbg.EVENT_SIGNAL_RECEIVED, (e: dbg.ISignalReceivedEvent) => {
 			logger.log('signal_receive:'+e.signalCode);
-			// If this is not handled that we receive select.c breakpoints when breakpoints are toggled in VSCode...
-			if (e.signalCode===undefined)
+			// If this is not handled then we receive select.c breakpoints when breakpoints are toggled in VSCode...
+			if (e.signalName==='SIGINT')
 				return;
 			let event=new StoppedEvent('signal', e.threadId,e.signalMeaning);
 			event.body['text']=e.signalMeaning;
 			event.body['description']=e.signalMeaning;
 			this.sendEvent(event);
+
+			// Signal message
+			vscode.window.showErrorMessage(`Signal occurred: ${e.signalName} ${e.signalMeaning}`);
 		});
 		this.dbgSession.on(dbg.EVENT_EXCEPTION_RECEIVED, (e: dbg.IExceptionReceivedEvent) => {
 			this.sendEvent(new StoppedEvent('exception', e.threadId,e.exception));
@@ -541,6 +545,7 @@ export class BeyDebug extends DebugSession {
 		if (this.isPascal) {
 			// Pascal exceptions
 			await this.dbgSession.addFPCExceptionBreakpoint();
+			await this.dbgSession.addFPCSignalStops();
 		}
 
 		await this.dbgSession.startInferior({stopAtStart: args.stopAtEntry}).catch((e) => {
@@ -655,6 +660,7 @@ export class BeyDebug extends DebugSession {
 		if (this.isPascal) {
 			// Pascal exceptions
 			await this.dbgSession.addFPCExceptionBreakpoint();
+			await this.dbgSession.addFPCSignalStops();
 		}
 
 		await this.dbgSession.resumeInferior();
@@ -790,8 +796,9 @@ export class BeyDebug extends DebugSession {
 		}
 		this._watchs.clear();
 
-		let isAnySource = false;
+		let sourceStackIndex = undefined;
 		let fpcException = undefined;
+		let stackIndex = 0;
 		response.body = {
 			stackFrames: frames.map(f => {
 
@@ -802,17 +809,21 @@ export class BeyDebug extends DebugSession {
 					fpcException = f;
 				}
 
-				// Any source
-				if (f.filename)
-					isAnySource = true;
+				// Source index (use VSCode API to check if file exists)
+				if (f.filename && f.fullname && sourceStackIndex === undefined) {
+					if (fs.existsSync(f.fullname)) {
+						sourceStackIndex = stackIndex;
+					}
+				}
+
+				stackIndex++;
 
 				return new StackFrame(
 					f.level,
 					f.func,
 					f.filename ? new Source(f.filename!, f.fullname) : null,
 					this.convertDebuggerLineToClient(f.line!)
-				);
-			}),
+				)}),
 			totalFrames: frames.length
 		};
 
@@ -842,22 +853,30 @@ export class BeyDebug extends DebugSession {
 
 			// Exception error message
 			vscode.window.showErrorMessage("Exception occurred: " + exceptionName);
+		}
 
-			// Exception without source file
-			if (!isAnySource) {
-				// Set the currently open file otherwise VSCode does not focus the thread in the Call stack list
-				const editor = vscode.window.activeTextEditor;
-				if (editor) {
-					const document = editor.document;
-					const fileName = document.fileName;
-					const cursorPosition = editor.selection.active;
+		// Stack without source file
+		if (sourceStackIndex === undefined || sourceStackIndex != 0) {
+			// Set the currently open file otherwise VSCode does not focus the thread in the Call stack list
+			const editor = vscode.window.activeTextEditor;
+			if (editor) {
+				const document = editor.document;
+				const fileName = document.fileName;
+				const cursorPosition = editor.selection.active;
 
-					// Set it to frame 0 so VSCode focuses the thread
+				// Set it to frame 0 so VSCode focuses the thread
+				if (sourceStackIndex === undefined) {
 					response.body.stackFrames[0].source = new Source('Exception', fileName);
 					response.body.stackFrames[0].line = cursorPosition.line + 1;
+
+				// Set it to the first source frame
+				} else {
+					response.body.stackFrames[0].source = response.body.stackFrames[sourceStackIndex].source;
+					response.body.stackFrames[0].line = response.body.stackFrames[sourceStackIndex].line;
 				}
 			}
 		}
+
 
 		this.sendResponse(response);
 	}

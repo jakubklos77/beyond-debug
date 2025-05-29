@@ -512,6 +512,11 @@ export default class DebugSession extends events.EventEmitter {
     return this.getNativeCommandOutput('break fpc_raiseexception');
   }
 
+  addFPCSignalStops(): Promise<void> {
+    this.getNativeCommandOutput('handle SIGPIPE stop print');
+    return this.getNativeCommandOutput('handle SIGSEGV stop print');
+  }
+
   /**
    * Removes multiple breakpoints.
    */
