@@ -44,6 +44,10 @@ const EVENT_CONFIG_DOWN='configdown';
 const NULL_POINTER = '0x0';
 const NULL_LABEL = '<null>';
 
+interface ILaunchArguments extends DebugProtocol.LaunchRequestArguments {
+	varUpperCase?: boolean;
+}
+
 export class BeyDebug extends DebugSession {
 
 	private _variableHandles = new Handles<string>();
@@ -387,6 +391,25 @@ export class BeyDebug extends DebugSession {
 
 	}
 
+	private checkPascalLanguage(args: ILaunchArguments) {
+
+		// Detect pascal
+		if (this.language == "auto") {
+			if (isLanguagePascal()) {
+				this.language = "pascal";
+			}
+		}
+		this.isPascal = this.language == 'pascal';
+
+		// Force upper case for pascal variables
+		if (this.isPascal) {
+			args.varUpperCase = true;
+		}
+
+		// Set common args
+		this.varUpperCase = args.varUpperCase;
+	}
+
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, _args: DebugProtocol.LaunchRequestArguments ) {
 
 		let args=_args as ILaunchRequestArguments;
@@ -399,12 +422,8 @@ export class BeyDebug extends DebugSession {
 			this.language='auto';
 		}
 
-		if(this.language=="auto"){
-			if(isLanguagePascal()){
-				this.language="pascal";
-			}
-		}
-		this.isPascal = this.language=='pascal';
+		this.checkPascalLanguage(args as ILaunchArguments);
+
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)
@@ -424,7 +443,6 @@ export class BeyDebug extends DebugSession {
 		if (args.cwd) {
 			await this.dbgSession.environmentCd(args.cwd);
 		}
-		this.varUpperCase=args.varUpperCase;
 		if (args.commandsBeforeExec){
 			for  (const cmd of args.commandsBeforeExec) {
 				await this.dbgSession.execNativeCommand(cmd)
@@ -564,12 +582,8 @@ export class BeyDebug extends DebugSession {
 			this.language='auto';
 		}
 
-		if(this.language=="auto"){
-			if(isLanguagePascal()){
-				this.language="pascal";
-			}
-		}
-		this.isPascal = this.language=='pascal';
+		this.checkPascalLanguage(args as ILaunchArguments);
+
 		this.initDbSession(false);
 			//const attacher: AttachPicker = new AttachPicker(attachItemsProvider);
 
@@ -596,7 +610,6 @@ export class BeyDebug extends DebugSession {
 		if (args.cwd) {
 			await this.dbgSession.environmentCd(args.cwd);
 		}
-		this.varUpperCase=args.varUpperCase;
 		if (args.commandsBeforeExec){
 			for (const  cmd of args.commandsBeforeExec) {
 				await this.dbgSession.execNativeCommand(cmd).catch((e)=>{

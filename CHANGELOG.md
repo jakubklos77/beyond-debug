@@ -1,5 +1,9 @@
-## [1.9.22]
+## [1.9.23]
 ## Added
+
+## [1.9.22] - 2025-06-05
+## Added
+- Pascal uppercase for variable watches defaults to True (fixes some local variable issues)
 - Signals are caught and displayed
 - Unknown source code line on break is not displayed, instead the first working source code is used
 
