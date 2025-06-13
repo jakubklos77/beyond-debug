@@ -1,6 +1,9 @@
-## [1.9.23]
+## [1.9.24]
 ## Added
-- Support for new VSCode and SSH module crashes, disabled
+
+## [1.9.23] - 2025-06-13
+## Added
+- Support for new VSCode 1.101.0 and SSH node module crashes, disabled
 
 ## [1.9.22] - 2025-06-05
 ## Added
