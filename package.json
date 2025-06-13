@@ -17,7 +17,7 @@
 		"debugger"
 	],
 	"engines": {
-		"vscode": "^1.65.0"
+		"vscode": "^1.95.0"
 	},
 	"icon": "assets/beyond-debug.png",
 	"categories": [
@@ -70,9 +70,10 @@
 		"vsce": "^1.78.0",
 		"vscode-nls": "5.2.0"
 	},
-	"main": "./out/extension",
+	"main": "./out/extension.js",
 	"activationEvents": [
-		"onDebug"
+		"onDebugResolve:by-gdb",
+		"onDebugInitialConfigurations"
 	],
 	"contributes": {
 		"commands": [

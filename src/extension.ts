@@ -5,27 +5,20 @@
 'use strict';
 import * as Net from 'net';
 import * as vscode from 'vscode';
-import { randomBytes } from 'crypto';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { platform } from 'process';
+
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
 import { logger } from '@vscode/debugadapter';
 
 import { BeyDebug } from './beyDebug';
 import { LogLevel } from '@vscode/debugadapter/lib/logger';
-import { TextEncoder } from 'util';
-import { pathToFileURL } from 'url';
 import * as memview from './beyMemoryView';
 /*
  * The compile time flag 'runMode' controls how the debug adapter is run.
  * Please note: the test suite only supports 'external' mode.
  */
 const runMode: 'server' | 'inline' = 'inline';
-const byMemoryViewSchema = 'bymv';
 import * as util from "./util";
-import { NativeAttachItemsProviderFactory } from './nativeAttach';
-import { AttachItemsProvider, AttachPicker } from './attachToProcess';
+
 export function activate(context: vscode.ExtensionContext) {
 
 	// Activate Process Picker Commands
@@ -110,7 +103,7 @@ class HiDebugConfigurationProvider implements vscode.DebugConfigurationProvider 
 			}
 		}
 
-		if (!config.program && config.request!='attach') {
+		if (!config.program && config.request != 'attach') {
 			return vscode.window.showInformationMessage("Cannot find a program to debug").then(_ => {
 				return undefined;	// abort launch
 			});
@@ -152,7 +145,7 @@ class HiDebugAdapterServerDescriptorFactory implements vscode.DebugAdapterDescri
 class InlineDebugAdapterFactory implements vscode.DebugAdapterDescriptorFactory {
 
 	createDebugAdapterDescriptor(_session: vscode.DebugSession): ProviderResult<vscode.DebugAdapterDescriptor> {
-		let dbg=new BeyDebug();
+		let dbg = new BeyDebug();
 		memview.setCurrentDebugSession(dbg);
 		return new vscode.DebugAdapterInlineImplementation(dbg);
 	}

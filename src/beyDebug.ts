@@ -20,7 +20,7 @@ import {showQuickPick} from './attachQuickPick';
 import {NativeAttachItemsProviderFactory} from './nativeAttach';
 import { AttachItemsProvider } from './attachToProcess';
 import path = require('path');
-import { BeyDbgSessionSSH } from './beyDbgSessionSSH';
+// SSH import will be done dynamically to avoid loading native modules at startup
 import { ILaunchRequestArguments,IAttachRequestArguments } from './argments';
 import { isLanguagePascal } from './util';
 import { log } from 'console';
@@ -139,10 +139,11 @@ export class BeyDebug extends DebugSession {
 	public constructor() {
 		super(true);
 	}
-	private initDbSession(is_ssh:boolean){
-
+	private async initDbSession(is_ssh:boolean){
 		this.isSSH=is_ssh;
 		if(is_ssh){
+			// Dynamically import SSH functionality to avoid loading native modules at startup
+			const { BeyDbgSessionSSH } = await import('./beyDbgSessionSSH');
 			this.dbgSession = new BeyDbgSessionSSH('mi3');
 		}else{
 			this.dbgSession=new BeyDbgSessionNormal('mi3');
@@ -413,7 +414,7 @@ export class BeyDebug extends DebugSession {
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, _args: DebugProtocol.LaunchRequestArguments ) {
 
 		let args=_args as ILaunchRequestArguments;
-		this.initDbSession(args.ssh?true:false);
+		await this.initDbSession(args.ssh?true:false);
 		//vscode.commands.executeCommand('workbench.panel.repl.view.focus');
 		this.defaultStringCharset = args.defaultStringCharset ? args.defaultStringCharset : "utf-8";
 		if(args.language){
@@ -584,7 +585,7 @@ export class BeyDebug extends DebugSession {
 
 		this.checkPascalLanguage(args as ILaunchArguments);
 
-		this.initDbSession(false);
+		await this.initDbSession(false);
 			//const attacher: AttachPicker = new AttachPicker(attachItemsProvider);
 
 
