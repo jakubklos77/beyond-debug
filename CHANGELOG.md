@@ -1,5 +1,6 @@
 ## [1.9.24]
 ## Added
+- Pascal string constants workaround
 
 ## [1.9.23] - 2025-06-13
 ## Added

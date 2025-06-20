@@ -1241,6 +1241,7 @@ export class BeyDebug extends DebugSession {
 					let strLen = stringChilds[0].value;
 					let strVal = '';
 					let isQuote = false;
+					let isNoneValue = false;
 					let minLen = Math.min(strLen, stringArr.length);
 					for (let i = 0; i < minLen; i++) {
 						let charInt = parseInt(stringArr[i].value)
@@ -1257,6 +1258,10 @@ export class BeyDebug extends DebugSession {
 								strVal += '\'';
 								isQuote = true;
 							}
+							if (isNaN(charInt)) {
+								isNoneValue = true;
+								break;
+							}
 							ch = String.fromCharCode(charInt);
 							if (ch == '\'')
 								ch += '\'';
@@ -1267,6 +1272,23 @@ export class BeyDebug extends DebugSession {
 						strVal += '\'';
 					if (strVal == '')
 						strVal = "''";
+
+					// We have a NaN value
+					if (isNoneValue) {
+
+						// Get expression from var and check if no '.' in the name (probably a constant)
+						let exp = await this.dbgSession.getWatchExpression(id);
+						if (!exp.includes('.')) {
+
+							// Evaluate the expression
+							let dataStr = await this.dbgSession.evaluateExpression(exp).catch((e) => {
+								return strVal;
+							});
+
+							// Convert to string
+							strVal = this.resultString(dataStr, 'ANSISTRING');
+						}
+					}
 
 					return strVal;
 				}
