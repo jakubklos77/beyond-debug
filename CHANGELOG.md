@@ -1,4 +1,6 @@
-## [1.9.24]
+## [1.9.25]
+
+## [1.9.24] - 2025-07-21
 ## Added
 - Pascal string constants workaround
 
