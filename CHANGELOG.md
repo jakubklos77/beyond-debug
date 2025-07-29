@@ -1,4 +1,7 @@
-## [1.9.25]
+## [1.10.0]
+### Changed
+
+## [1.9.25] - 2025-07-29
 ### Changed
 - Pascal debugger - 'step-mode on' by default, fixes step into interface calls and others
 
