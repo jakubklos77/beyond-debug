@@ -561,11 +561,9 @@ export class BeyDebug extends DebugSession {
 
 		}
 
-		if (this.isPascal) {
-			// Pascal exceptions
-			await this.dbgSession.addFPCExceptionBreakpoint();
-			await this.dbgSession.addFPCSignalStops();
-		}
+		// Pascal init
+		if (this.isPascal)
+			await this.initPascalDebugger();
 
 		await this.dbgSession.startInferior({stopAtStart: args.stopAtEntry}).catch((e) => {
 			this.sendMsgToDebugConsole(e.message, EMsgType.error);
@@ -573,6 +571,16 @@ export class BeyDebug extends DebugSession {
 			this.sendEvent(new TerminatedEvent(false));
 		});
 		this.sendResponse(response);
+	}
+
+	protected async initPascalDebugger() {
+
+		// Pascal exceptions
+		await this.dbgSession.addFPCExceptionBreakpoint();
+		await this.dbgSession.addFPCSignalStops();
+
+		// Step mode on
+		await this.dbgSession.setStepMode(true);
 	}
 
 	protected async attachRequest(response: DebugProtocol.AttachResponse, _args:DebugProtocol.AttachRequestArguments) {
@@ -671,11 +679,9 @@ export class BeyDebug extends DebugSession {
 			return;
 		}
 
-		if (this.isPascal) {
-			// Pascal exceptions
-			await this.dbgSession.addFPCExceptionBreakpoint();
-			await this.dbgSession.addFPCSignalStops();
-		}
+		// Pascal init
+		if (this.isPascal)
+			await this.initPascalDebugger();
 
 		await this.dbgSession.resumeInferior();
 		this._isAttached=true;

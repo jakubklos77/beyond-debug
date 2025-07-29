@@ -517,6 +517,10 @@ export default class DebugSession extends events.EventEmitter {
     return this.getNativeCommandOutput('handle SIGSEGV stop print');
   }
 
+  setStepMode(on: boolean): Promise<void> {
+    return this.getNativeCommandOutput('set step-mode ' + (on ? 'on' : 'off'));
+  }
+
   /**
    * Removes multiple breakpoints.
    */

@@ -1,81 +1,83 @@
 ## [1.9.25]
+### Changed
+- Pascal debugger - 'step-mode on' by default, fixes step into interface calls and others
 
 ## [1.9.24] - 2025-07-21
-## Added
+### Added
 - Pascal string constants workaround
 
 ## [1.9.23] - 2025-06-13
-## Added
+### Added
 - Support for new VSCode 1.101.0 and SSH node module crashes, disabled
 
 ## [1.9.22] - 2025-06-05
-## Added
+### Added
 - Pascal uppercase for variable watches defaults to True (fixes some local variable issues)
 - Signals are caught and displayed
 - Unknown source code line on break is not displayed, instead the first working source code is used
 
 ## [1.9.21] - 2025-05-20
-## Fixed
+### Fixed
 - <null> variable has no children count
 
 ## [1.9.20] - 2025-05-13
-## Fixed
+### Fixed
 - Breakpoint issue (sometimes all breakpoints were removed)
 - Centralized type handling for pascal
 
 ## [1.9.19] - 2025-04-28
-## Fixed
+### Fixed
 - Nil instances display members no more
 
 ## [1.9.18] - 2025-04-22
-## Fixed
+### Fixed
 - memory view fixed
 - Ctrl+F (find dialog) vs shortcut conflict attempt
 
 ## [1.9.17] - 2025-04-15
-## Added
+### Added
 - FPC exceptions catching
 - Call stack #NaN fixed
 - FPC exception name retrieved from $rdi and displayed as an error message
 - FPC class members - function Getter vs Fvar member for hover watch support
-## Fixed
+### Fixed
 - SIGINT select.c breakpoint not trigged on breakpoint toggle
 - arrays: length +1
 
 ## [1.9.16] - 2025-04-09
-## Added
+### Added
 - general arrays support
-## Fixed
+### Fixed
 - string types used instead
 - arrays length fixed
 
 ## [1.9.15] - 2025-04-8
-## Added
+### Added
 - option activateTerminal
 - option clearTerminal
 - FPC arrays support
 - FPC shortstring, ansistring handling, decoding and utf8 support
 
 ## [0.9.15] - 2023-05-30
-## Fixed
+### Fixed
 - Resolve the issue of not being able to set breakpoints when using SSH for remote debugging in Linux.
 
 ## [0.9.14] - 2022-11-23
-## Added
+### Added
 - Add language argument for launching c++, pascal program.
 
 ## [0.9.12] - 2022-11-21
-## Added
+### Added
 - Open SSH shell as terminal for debug.
 - Show progress when uploading file through ssh.
 - Only modified files will be uploaded.
 
 ## [0.9.11] - 2022-10-25
-## Added
+### Added
 - Use gdb through SSH
 
 ## [0.9.10] - 2022-10-17
-## Fixed
+### Fixed
 - Breakpointer not inserted after attach
 
 ## [0.9.9] -  2022-10-11
@@ -125,5 +127,3 @@
 ## [0.9.0] - 2020/09/16
 ### Added
 * Initial release
-
-
