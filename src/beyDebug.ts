@@ -1304,6 +1304,15 @@ export class BeyDebug extends DebugSession {
 			let val = await this.dbgSession.execNativeCommand(args.expression).catch((e) => {
 				this.sendMsgToDebugConsole(e.message, EMsgType.error);
 			});;
+
+		} else if (args.context === 'clipboard') {
+
+			response.body = {
+				result: args.expression,
+				type: undefined,
+				variablesReference: 0
+			};
+
 		} else { //'watch hover'
 			if (this._currentFrameLevel !== args.frameId) {
 				this.dbgSession.selectStackFrame({ frameLevel: args.frameId });
