@@ -38,7 +38,7 @@ export class BeyDbgSessionNormal extends DebugSession {
     super();
     this.on(dbg.EVENT_THREAD_GROUP_STARTED,(e)=>{
       this.target_pid=Number.parseInt(e.pid);
-      
+
     })
   }
 
@@ -53,14 +53,14 @@ export class BeyDbgSessionNormal extends DebugSession {
         this.debuggerProcess.on('close',()=>{
           reject();
         });
-      }     
+      }
     });
   }
   public async startIt(args:ILaunchRequestArguments|IAttachRequestArguments) {
     let debuggerArgs: string[] = args.debuggerArgs ? args.debuggerArgs : [];
     this.target_pid=null;
     const debuggerFilename = args.debuggerPath ? args.debuggerPath : 'gdb';
-    
+
     debuggerArgs = debuggerArgs.concat(['--interpreter', this.miVersion]);
     this.debuggerProcess = spawn(debuggerFilename, debuggerArgs);
     let check_version=(out:string)=>{
@@ -90,7 +90,7 @@ export class BeyDbgSessionNormal extends DebugSession {
     this.start(this.debuggerProcess.stdout!, this.debuggerProcess.stdin!);
 
     if(process.platform==='win32'){
-      
+
       await this.executeCommand('gdb-set new-console on',null);
     }else if (process.platform==='linux' || process.platform==='darwin'){
       this.winbreakpath=null;
@@ -133,7 +133,7 @@ export class BeyDbgSessionNormal extends DebugSession {
       try {
         if(os.platform() === 'win32'){
           if(this.winbreakpath){
-           
+
             let proc = spawn(path.basename(this.winbreakpath), [this.target_pid.toString()], { cwd: path.dirname(this.winbreakpath) });
             proc.on('close', (code) => {
               if(code==0){
@@ -142,20 +142,20 @@ export class BeyDbgSessionNormal extends DebugSession {
               }else{
                 reject();
               }
-              
+
               //console.log(`child process exited with code ${code}`);
-            });   
+            });
             //resolve();
           }else{
             process.kill(this.debuggerProcess.pid,"SIGINT");
           }
         }else{
           process.kill(this.debuggerProcess.pid,"SIGINT");
-        }      
+        }
       } catch (error) {
         //this.logger.error("pause failure. "+this.debuggerProcess.toString()+error);
         reject();
-      } 
+      }
       //resolve();
       this.once(EVENT_TARGET_STOPPED,(e)=>{
         resolve();
@@ -169,7 +169,7 @@ export class BeyDbgSessionNormal extends DebugSession {
         resolve();
       } catch (error) {
         reject();
-      } 
+      }
       //resolve();
       this.once(EVENT_TARGET_STOPPED,(e)=>{
         resolve();
@@ -185,7 +185,7 @@ export class BeyDbgSessionNormal extends DebugSession {
       }
       return super.startInferior(options);
   }
-  public async dbgexit(){ 
+  public async dbgexit(){
     await this.end(true);
   }
 

@@ -16,11 +16,11 @@ import { Message } from '@vscode/debugadapter/lib/messages';
 
 const SSH_MAP_KEY = 'BY:';
 const SSH_KEY_KEY = 'BY:SSHKEY';
-var ssh_clients: Map<string, BySSHClient> = new Map<string, BySSHClient>;
+var ssh_clients: Map<string, BySSHClient> = new Map<string, BySSHClient>();
 class SSHTerminal implements vscode.Pseudoterminal, vscode.TerminalExitStatus {
 
   constructor(private channel: Channel,public sshclient:BySSHClient) {
-  
+
     this.channel.on("data", (buf: Buffer) => {
       this.writeEmitter.fire(buf.toString());
     });
@@ -331,7 +331,7 @@ export class BeyDbgSessionSSH extends DebugSession {
             let pids=pid.trimEnd().split('\n');
             if(pids.length>0){
               this.gdb_pid=pids[pids.length-1];
-              return 
+              return
             }
           }
           this.gdb_pid = '';
@@ -364,7 +364,7 @@ export class BeyDbgSessionSSH extends DebugSession {
       tty=pty.sshclient.tty;
 
     }
-    
+
     await this.sshclient.doConnect(this.args);
     return new Promise<void>((resolve, reject): void => {
       if (!tty) {
@@ -381,7 +381,7 @@ export class BeyDbgSessionSSH extends DebugSession {
           }else{
             return input;
           }
-          
+
         });
       }
       if (this.args.ssh.transfer) {
@@ -407,7 +407,7 @@ export class BeyDbgSessionSSH extends DebugSession {
                   if (stat.size = stats.size) {
 
                     let f_mtime = util.extensionContext.workspaceState.get<number>(f_key);
-  
+
                     if (Math.abs(stat.mtimeMs - f_mtime) < Number.EPSILON) {
                       return _resolve(true);
                     }
@@ -419,7 +419,7 @@ export class BeyDbgSessionSSH extends DebugSession {
                       mode=755;
                     }
                   }
-                }   
+                }
                 return _resolve(false);
               });
             });
