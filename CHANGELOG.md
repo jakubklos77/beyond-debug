@@ -1,5 +1,9 @@
-## [1.10.0]
+## [1.10.0] - 2025-07-30
+### Added
+- New context menu Toggle gdb step-mode and command
+- New commands bydebug.StepModeOn, bydebug.StepModeOff
 ### Changed
+- Pascal debugger - 'step-mode on' removed
 
 ## [1.9.25] - 2025-07-29
 ### Changed

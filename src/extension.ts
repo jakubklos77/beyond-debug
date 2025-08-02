@@ -12,6 +12,7 @@ import { logger } from '@vscode/debugadapter';
 import { BeyDebug } from './beyDebug';
 import { LogLevel } from '@vscode/debugadapter/lib/logger';
 import * as memview from './beyMemoryView';
+import * as commands from './beyCommands';
 /*
  * The compile time flag 'runMode' controls how the debug adapter is run.
  * Please note: the test suite only supports 'external' mode.
@@ -38,7 +39,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 	context.subscriptions.push(
-		vscode.commands.registerTextEditorCommand('bydebug.ViewMemory',memview.cmdViewMemoryWithHexEdit)
+		vscode.commands.registerTextEditorCommand('bydebug.ViewMemory', memview.cmdViewMemoryWithHexEdit),
+		vscode.commands.registerTextEditorCommand('bydebug.ToggleStepMode', commands.cmdToggleStepMode),
+		vscode.commands.registerTextEditorCommand('bydebug.StepModeOn', commands.cmdStepModeOn),
+		vscode.commands.registerTextEditorCommand('bydebug.StepModeOff', commands.cmdStepModeOff)
 	);
 
 
@@ -147,6 +151,7 @@ class InlineDebugAdapterFactory implements vscode.DebugAdapterDescriptorFactory 
 	createDebugAdapterDescriptor(_session: vscode.DebugSession): ProviderResult<vscode.DebugAdapterDescriptor> {
 		let dbg = new BeyDebug();
 		memview.setCurrentDebugSession(dbg);
+		commands.setCurrentDebugSession(dbg);
 		return new vscode.DebugAdapterInlineImplementation(dbg);
 	}
 }

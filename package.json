@@ -1,7 +1,7 @@
 {
 	"name": "beyond-debug",
 	"displayName": "GDB Debugger - Beyond",
-	"version": "1.9.25",
+	"version": "1.10.0",
 	"publisher": "jakubklos",
 	"description": "Debugger with gdb for c,c++,freepascal,fortran and more.",
 	"author": "jakubklos <jakubklos77@gmail.com>",
@@ -82,12 +82,34 @@
 				"command": "bydebug.ViewMemory",
 				"icon": "$(symbol-parameter)",
 				"category": "byeond"
+			},
+			{
+				"title": "Toggle step-mode",
+				"command": "bydebug.ToggleStepMode",
+				"icon": "$(symbol-parameter)",
+				"category": "byeond"
+			},
+			{
+				"title": "Set step-mode on",
+				"command": "bydebug.StepModeOn",
+				"icon": "$(symbol-parameter)",
+				"category": "byeond"
+			},
+			{
+				"title": "Set step-mode off",
+				"command": "bydebug.StepModeOff",
+				"icon": "$(symbol-parameter)",
+				"category": "byeond"
 			}
 		],
 		"menus": {
 			"editor/context": [
 				{
 					"command": "bydebug.ViewMemory",
+					"when": "inDebugMode&&debugType==by-gdb"
+				},
+				{
+					"command": "bydebug.ToggleStepMode",
 					"when": "inDebugMode&&debugType==by-gdb"
 				}
 			]
