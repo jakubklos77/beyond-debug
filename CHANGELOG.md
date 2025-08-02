@@ -2,6 +2,7 @@
 ### Added
 - New context menu Toggle gdb step-mode and command
 - New commands bydebug.StepModeOn, bydebug.StepModeOff
+- Support for watch copy to clipboard
 ### Changed
 - Pascal debugger - 'step-mode on' removed
 
