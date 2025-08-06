@@ -43,6 +43,7 @@ enum EMsgType {
 const EVENT_CONFIG_DOWN = 'configdown';
 const NULL_POINTER = '0x0';
 const NULL_LABEL = '<null>';
+const MAX_WATCH_STRING_LENGTH = 2048;
 
 interface ILaunchArguments extends DebugProtocol.LaunchRequestArguments {
 	varUpperCase?: boolean;
@@ -271,7 +272,7 @@ export class BeyDebug extends DebugSession {
 						let isQuote = false;
 						let result = '';
 						let isNum = false;
-						let minLen = Math.min(val.length, 255);
+						let minLen = Math.min(val.length, MAX_WATCH_STRING_LENGTH);
 						let lastQuoteIndex = -10;
 						for (let i = 0; i < minLen; i++) {
 							let ch = val[i];
@@ -308,6 +309,11 @@ export class BeyDebug extends DebugSession {
 							} else {
 								result += ch;
 							}
+						}
+
+						// Max length
+						if (result.length >= MAX_WATCH_STRING_LENGTH) {
+							result = result.substring(0, MAX_WATCH_STRING_LENGTH - 1) + '...';
 						}
 
 						let bf = result.split('').map((e) => { return e.charCodeAt(0); });
@@ -1328,10 +1334,10 @@ export class BeyDebug extends DebugSession {
 					threadId: this._currentThreadId?.id
 				}).catch((e) => { });
 
-				// We have a pascal and a dotted expression (probably a class with a member that uses a function Getter
+				// We have a pascal and a dotted expression (probably a class with a member that uses a function Getter - instance.Property)
 				if (!watch && this.isPascal && exp.includes('.')) {
 
-					// Replace all . with .F (lets look for a hidden "F" variable in the class)
+					// Replace all . with .F (lets look for a hidden "F" variable in the class - instance.FProperty)
 					let newExp = exp.replace(/\.(?!FF)(\w)/g, '.F$1');
 
 					// Try again

@@ -1,3 +1,7 @@
+## [1.10.1]
+### Changed
+- Pascal ansistring - max length 2048
+
 ## [1.10.0] - 2025-07-30
 ### Added
 - New context menu Toggle gdb step-mode and command
