@@ -272,9 +272,8 @@ export class BeyDebug extends DebugSession {
 						let isQuote = false;
 						let result = '';
 						let isNum = false;
-						let minLen = Math.min(val.length, MAX_WATCH_STRING_LENGTH);
 						let lastQuoteIndex = -10;
-						for (let i = 0; i < minLen; i++) {
+						for (let i = 0; i < val.length; i++) {
 							let ch = val[i];
 
 							// Quote
@@ -309,11 +308,6 @@ export class BeyDebug extends DebugSession {
 							} else {
 								result += ch;
 							}
-						}
-
-						// Max length
-						if (result.length >= MAX_WATCH_STRING_LENGTH) {
-							result = result.substring(0, MAX_WATCH_STRING_LENGTH - 1) + '...';
 						}
 
 						let bf = result.split('').map((e) => { return e.charCodeAt(0); });
@@ -445,8 +439,12 @@ export class BeyDebug extends DebugSession {
 			this.sendErrorResponse(response, 500);
 		}
 
+		// Set GDB string length limit using our constant
+		await this.dbgSession.execNativeCommand(`set print elements ${MAX_WATCH_STRING_LENGTH}`)
+			.catch((e) => {
+				this.sendMsgToDebugConsole(e.message, EMsgType.error);
+			});
 
-		//await this.dbgSession.execNativeCommand('-gdb-set mi-async on');
 		if (args.cwd) {
 			await this.dbgSession.environmentCd(args.cwd);
 		}
@@ -616,7 +614,13 @@ export class BeyDebug extends DebugSession {
 		await this.waitForConfingureDone();
 		//must wait for configure done. It will get error args without this.
 		await this.dbgSession.waitForStart();
-		//await this.dbgSession.execNativeCommand('-gdb-set mi-async on');
+
+		// Set GDB string length limit using our constant
+		await this.dbgSession.execNativeCommand(`set print elements ${MAX_WATCH_STRING_LENGTH}`)
+			.catch((e) => {
+				this.sendMsgToDebugConsole(e.message, EMsgType.error);
+			});
+
 		if (args.cwd) {
 			await this.dbgSession.environmentCd(args.cwd);
 		}
