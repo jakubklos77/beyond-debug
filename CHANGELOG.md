@@ -1,4 +1,4 @@
-## [1.10.1]
+## [1.10.1] - 2025-09-02
 ### Changed
 - gdb max string length defaults to 2048
 
