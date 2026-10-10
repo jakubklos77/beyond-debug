@@ -206,7 +206,13 @@ export class BeyDebug extends DebugSession {
 		});
 
 		//'step', 'breakpoint', 'exception', 'pause', 'entry', 'goto', 'function breakpoint', 'data breakpoint', 'instruction breakpoint'
-		this.dbgSession.on(dbg.EVENT_BREAKPOINT_HIT, (e: dbg.IBreakpointHitEvent) => {
+		this.dbgSession.on(dbg.EVENT_BREAKPOINT_HIT, async (e: dbg.IBreakpointHitEvent) => {
+
+			// FPC exception on the ignore list - continue the execution
+			if (e.frame?.func == 'fpc_raiseexception' && await this.isFPCExceptionIgnored()) {
+				return;
+			}
+
 			this.sendEvent(new StoppedEvent('breakpoint', e.threadId));
 		});
 		this.dbgSession.on(dbg.EVENT_STEP_FINISHED, (e: dbg.IStepFinishedEvent) => {
@@ -856,26 +862,7 @@ export class BeyDebug extends DebugSession {
 		// FPC exceptions
 		if (fpcException) {
 
-			let exceptionName = "";
-
-			// Get exception info for x86_64
-			if (process.arch === 'x64') {
-
-				let info = undefined;
-				// Try *($rdi) and ($rdi)^ as both are used and sometimes on works and not the other
-				try {
-					info = await this.dbgSession.getFPCExceptionDataDisassemble("*($rdi)");
-				} catch (error) {
-					info = await this.dbgSession.getFPCExceptionDataDisassemble("($rdi)^");
-				}
-
-				if (info?.asm_insns[0]) {
-					let funcName = info?.asm_insns[0]["func-name"];
-					if (funcName) {
-						exceptionName = funcName.match(/\$\$_(.*)$/)?.[1] || funcName;
-					}
-				}
-			}
+			let exceptionName = await this.getFPCExceptionName();
 
 			// Exception error message
 			vscode.window.showErrorMessage("Exception occurred: " + exceptionName);
@@ -905,6 +892,59 @@ export class BeyDebug extends DebugSession {
 
 
 		this.sendResponse(response);
+	}
+
+	/**
+	 * Returns the exception class name when stopped in fpc_raiseexception (x86_64 only)
+	 */
+	private async getFPCExceptionName(): Promise<string> {
+
+		let exceptionName = "";
+
+		// Get exception info for x86_64
+		if (process.arch === 'x64') {
+
+			let info = undefined;
+			// Try *($rdi) and ($rdi)^ as both are used and sometimes on works and not the other
+			try {
+				info = await this.dbgSession.getFPCExceptionDataDisassemble("*($rdi)");
+			} catch (error) {
+				info = await this.dbgSession.getFPCExceptionDataDisassemble("($rdi)^").catch(() => undefined);
+			}
+
+			if (info?.asm_insns?.[0]) {
+				let funcName = info.asm_insns[0]["func-name"];
+				if (funcName) {
+					exceptionName = funcName.match(/\$\$_(.*)$/)?.[1] || funcName;
+				}
+			}
+		}
+
+		return exceptionName;
+	}
+
+	/**
+	 * Checks the current FPC exception against the ignore list and resumes the execution when matched
+	 */
+	private async isFPCExceptionIgnored(): Promise<boolean> {
+
+		const config = vscode.workspace.getConfiguration('bydebug', vscode.workspace.workspaceFolders?.[0]?.uri);
+		if (!config.get<boolean>('ignoreExceptions', false))
+			return false;
+
+		const ignoreList = config.get<string[]>('ignoreExceptionsList', []).map(name => name.trim().toUpperCase());
+		if (ignoreList.length == 0)
+			return false;
+
+		const exceptionName = await this.getFPCExceptionName().catch(() => "");
+		if (!exceptionName || !ignoreList.includes(exceptionName.toUpperCase()))
+			return false;
+
+		this.sendMsgToDebugConsole(`Exception ignored: ${exceptionName}\n`, EMsgType.alert);
+		await this.dbgSession.resumeInferior().catch((e) => {
+			this.sendMsgToDebugConsole(e.message, EMsgType.error);
+		});
+		return true;
 	}
 
 	protected async scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments) {

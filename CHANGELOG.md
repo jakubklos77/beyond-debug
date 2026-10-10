@@ -1,3 +1,10 @@
+## [1.10.2] - 2026-10-10
+### Added
+- Pascal debugger - ignore selected FPC exceptions and continue the execution
+- New settings bydebug.ignoreExceptions (enable/disable) and bydebug.ignoreExceptionsList (exception class names, case-insensitive)
+  "bydebug.ignoreExceptions": true,
+  "bydebug.ignoreExceptionsList": ["ETeamChatAPIException"]
+
 ## [1.10.1] - 2025-09-02
 ### Changed
 - gdb max string length defaults to 2048

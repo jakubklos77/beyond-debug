@@ -1,7 +1,7 @@
 {
 	"name": "beyond-debug",
 	"displayName": "GDB Debugger - Beyond",
-	"version": "1.10.1",
+	"version": "1.10.2",
 	"publisher": "jakubklos",
 	"description": "Debugger with gdb for c,c++,freepascal,fortran and more.",
 	"author": "jakubklos <jakubklos77@gmail.com>",
@@ -76,6 +76,26 @@
 		"onDebugInitialConfigurations"
 	],
 	"contributes": {
+		"configuration": {
+			"title": "GDB Debugger - Beyond",
+			"properties": {
+				"bydebug.ignoreExceptions": {
+					"type": "boolean",
+					"default": false,
+					"scope": "resource",
+					"description": "Pascal debugger - do not stop on FPC exceptions listed in 'bydebug.ignoreExceptionsList' and continue the execution."
+				},
+				"bydebug.ignoreExceptionsList": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"scope": "resource",
+					"description": "Pascal debugger - list of FPC exception class names to ignore (case-insensitive), e.g. ETeamChatAPIException."
+				}
+			}
+		},
 		"commands": [
 			{
 				"title": "View Memory",
