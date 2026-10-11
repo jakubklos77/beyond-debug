@@ -3,7 +3,7 @@
 - Pascal debugger - ignore selected FPC exceptions and continue the execution
 - New settings bydebug.ignoreExceptions (enable/disable) and bydebug.ignoreExceptionsList (exception class names, case-insensitive)
   "bydebug.ignoreExceptions": true,
-  "bydebug.ignoreExceptionsList": ["ETeamChatAPIException"]
+  "bydebug.ignoreExceptionsList": ["ETeamChatException"]
 
 ## [1.10.1] - 2025-09-02
 ### Changed
