@@ -450,6 +450,7 @@ export class BeyDebug extends DebugSession {
 			.catch((e) => {
 				this.sendMsgToDebugConsole(e.message, EMsgType.error);
 			});
+		await this.initSignalHandling();
 
 		if (args.cwd) {
 			await this.dbgSession.environmentCd(args.cwd);
@@ -581,6 +582,18 @@ export class BeyDebug extends DebugSession {
 		this.sendResponse(response);
 	}
 
+	/**
+	 * Configures gdb signal handling according to the extension settings
+	 */
+	protected async initSignalHandling() {
+
+		const config = vscode.workspace.getConfiguration('bydebug', vscode.workspace.workspaceFolders?.[0]?.uri);
+		await this.dbgSession.setSIGPIPEStop(!config.get<boolean>('ignoreSIGPIPE', true))
+			.catch((e) => {
+				this.sendMsgToDebugConsole(e.message, EMsgType.error);
+			});
+	}
+
 	protected async initPascalDebugger() {
 
 		// Pascal exceptions
@@ -626,6 +639,7 @@ export class BeyDebug extends DebugSession {
 			.catch((e) => {
 				this.sendMsgToDebugConsole(e.message, EMsgType.error);
 			});
+		await this.initSignalHandling();
 
 		if (args.cwd) {
 			await this.dbgSession.environmentCd(args.cwd);

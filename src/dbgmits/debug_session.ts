@@ -513,8 +513,14 @@ export default class DebugSession extends events.EventEmitter {
   }
 
   addFPCSignalStops(): Promise<void> {
-    this.getNativeCommandOutput('handle SIGPIPE stop print');
     return this.getNativeCommandOutput('handle SIGSEGV stop print');
+  }
+
+  /**
+   * Sets whether the debugger stops on SIGPIPE. The signal is always passed to the program.
+   */
+  setSIGPIPEStop(stop: boolean): Promise<void> {
+    return this.getNativeCommandOutput('handle SIGPIPE ' + (stop ? 'stop print' : 'nostop noprint') + ' pass');
   }
 
   setStepMode(on: boolean): Promise<void> {

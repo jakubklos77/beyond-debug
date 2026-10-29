@@ -1,7 +1,7 @@
 {
 	"name": "beyond-debug",
 	"displayName": "GDB Debugger - Beyond",
-	"version": "1.10.2",
+	"version": "1.10.3",
 	"publisher": "jakubklos",
 	"description": "Debugger with gdb for c,c++,freepascal,fortran and more.",
 	"author": "jakubklos <jakubklos77@gmail.com>",
@@ -79,6 +79,12 @@
 		"configuration": {
 			"title": "GDB Debugger - Beyond",
 			"properties": {
+				"bydebug.ignoreSIGPIPE": {
+					"type": "boolean",
+					"default": true,
+					"scope": "resource",
+					"description": "Do not stop the debugger on SIGPIPE (broken pipe/socket). The signal is still passed to the program."
+				},
 				"bydebug.ignoreExceptions": {
 					"type": "boolean",
 					"default": false,

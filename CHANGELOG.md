@@ -1,3 +1,9 @@
+## [1.10.3] - 2026-10-29
+### Added
+- New setting bydebug.ignoreSIGPIPE (default true) - the debugger does not stop on SIGPIPE, the signal is still passed to the program
+### Changed
+- Pascal debugger - no longer stops on SIGPIPE by default
+
 ## [1.10.2] - 2026-10-10
 ### Added
 - Pascal debugger - ignore selected FPC exceptions and continue the execution
